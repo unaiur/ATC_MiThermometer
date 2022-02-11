@@ -111,6 +111,13 @@ static const u8 my_FirmStr[] = {"github.com/pvvx"};
 static const u8 my_HardStr[] = {"DIY01"};
 static const u8 my_SoftStr[] = {'V','0'+(VERSION>>4),'.','0'+(VERSION&0x0f)};
 static const u8 my_ManStr[] = {"Qingping Technology (Beijing) Co., Ltd."};
+#elif DEVICE_TYPE == DEVICE_CGDK2
+static const u8 my_ModelStr[] = {"CGDK2"};
+static const u8 my_SerialStr[] = {"0001"};
+static const u8 my_FirmStr[] = {"github.com/pvvx"};
+static const u8 my_HardStr[] = {"DUCK 2_D5_20200622"};
+static const u8 my_SoftStr[] = {'V','0'+(VERSION>>4),'.','0'+(VERSION&0x0f)};
+static const u8 my_ManStr[] = {"Qingping Technology (Beijing) Co., Ltd."};
 #else
 #error "DEVICE_TYPE = ?"
 #endif

@@ -33,7 +33,7 @@ RAM uint8_t ble_name[32] = { 11, 0x09,
 		'M', 'H', 'O', '_', '0', '0', '0', '0',	'0', '0' };
 #elif DEVICE_TYPE == DEVICE_CGG1
 		'C', 'G', 'G', '_', '0', '0', '0', '0',	'0', '0' };
-#elif DEVICE_TYPE == DEVICE_CGDK22
+#elif (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
 		'C', 'G', 'D', '_', '0', '0', '0', '0',	'0', '0' };
 #else
 		'A', 'T', 'C', '_', '0', '0', '0', '0',	'0', '0' };
@@ -203,7 +203,7 @@ void ble_get_name(void) {
 		ble_name[3] = 'G';
 		ble_name[4] = 'G';
 		ble_name[5] = '_';
-#elif DEVICE_TYPE == DEVICE_CGDK22
+#elif (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
 		ble_name[2] = 'C';
 		ble_name[3] = 'G';
 		ble_name[4] = 'D';
@@ -214,12 +214,22 @@ void ble_get_name(void) {
 		ble_name[4] = 'C';
 		ble_name[5] = '_';
 #endif
-		ble_name[6] = hex_ascii[mac_public[2] >> 4];
-		ble_name[7] = hex_ascii[mac_public[2] & 0x0f];
-		ble_name[8] = hex_ascii[mac_public[1] >> 4];
-		ble_name[9] = hex_ascii[mac_public[1] & 0x0f];
-		ble_name[10] = hex_ascii[mac_public[0] >> 4];
-		ble_name[11] = hex_ascii[mac_public[0] & 0x0f];
+
+#if (DEVICE_TYPE == DEVICE_CGDK2)
+// CGDK2 Bluetooth MAC starts with a 3 byte manufacturer code,
+// as defined by the Bluetooth standard.
+// Using that code makes all devices have the same name
+#define MAC_OFFSET 3
+#else
+// Keep current behaviour for older devices
+#define MAC_OFFSET 0
+#endif
+		ble_name[6] = hex_ascii[mac_public[MAC_OFFSET + 2] >> 4];
+		ble_name[7] = hex_ascii[mac_public[MAC_OFFSET + 2] & 0x0f];
+		ble_name[8] = hex_ascii[mac_public[MAC_OFFSET + 1] >> 4];
+		ble_name[9] = hex_ascii[mac_public[MAC_OFFSET + 1] & 0x0f];
+		ble_name[10] = hex_ascii[mac_public[MAC_OFFSET] >> 4];
+		ble_name[11] = hex_ascii[mac_public[MAC_OFFSET] & 0x0f];
 		my_Attributes[GenericAccess_DeviceName_DP_H].attrLen = 10;
 		ble_name[0] = 11;
 	} else {

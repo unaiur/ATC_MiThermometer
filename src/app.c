@@ -88,13 +88,17 @@ const cfg_t def_cfg = {
 		.measure_interval = 4, // * advertising_interval = 10 sec
 		.min_step_time_update_lcd = 49, //x0.05 sec,   2.45 sec
 		.hw_cfg.hwver = 6,
+#elif DEVICE_TYPE == DEVICE_CGDK2
+		.measure_interval = 4, // * advertising_interval = 10 sec
+		.min_step_time_update_lcd = 49, //x0.05 sec,   2.45 sec
+		.hw_cfg.hwver = 7,
 #endif
 #if USE_FLASH_MEMO || USE_CLOCK
 		.hw_cfg.clock = 1,
 #endif
 #if USE_FLASH_MEMO
 		.hw_cfg.memo = 1,
-#if (DEVICE_TYPE == DEVICE_LYWSD03MMC) || (DEVICE_TYPE == DEVICE_CGDK22)
+#if (DEVICE_TYPE == DEVICE_LYWSD03MMC) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
 		.averaging_measurements = 60, // * measure_interval = 10 * 60 = 600 sec = 10 minutes
 #else // DEVICE_TYPE == DEVICE_MHO_C401 & DEVICE_CGG1
 		.averaging_measurements = 30, // * measure_interval = 20 * 30 = 600 sec = 10 minutes
@@ -155,6 +159,8 @@ static void set_hw_version(void) {
 	cfg.hw_cfg.hwver = 2;
 #elif DEVICE_TYPE == DEVICE_CGDK22
 	cfg.hw_cfg.hwver = 6;
+#elif DEVICE_TYPE == DEVICE_CGDK2
+	cfg.hw_cfg.hwver = 7;
 #else
 	cfg.hw_cfg.hwver = 4;
 #endif
@@ -281,7 +287,7 @@ void low_vbat(void) {
 		soft_reset_sensor();
 	show_temp_symbol(0);
 	show_big_number_x10(measured_data.battery_mv * 10);
-#if (DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
+#if (DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
 	show_small_number_x10(-1023, 1); // "Lo"
 #else
 	show_small_number(-123, 1); // "Lo"
@@ -384,7 +390,7 @@ void user_init_normal(void) {//this will get executed one time after power up
 	check_battery();
 	WakeupLowPowerCb(0);
 	lcd();
-#if (DEVICE_TYPE == DEVICE_LYWSD03MMC) || (DEVICE_TYPE == DEVICE_CGDK22)
+#if (DEVICE_TYPE == DEVICE_LYWSD03MMC) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
 	update_lcd();
 #endif
 	start_measure = 1;
@@ -417,22 +423,22 @@ _attribute_ram_code_ __attribute__((optimize("-Os"))) void lcd(void) {
 	if (chow_tick_sec && (show_stage & 2)) { // show ext data
 		if (show_stage & 1) { // stage blinking or show battery or clock
 			if (cfg.flg.show_batt_enabled
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
+#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
 #else
 				|| battery_level <= 15
 #endif
 				) { // Battery
 				show_smiley(0); // stage show battery
 				show_battery_symbol(1);
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
 #if DEVICE_TYPE == DEVICE_CGG1
 				show_batt_cgg1();
-#else
+#elif DEVICE_TYPE == DEVICE_CGDK22
 				show_batt_cgdk22();
-#endif
+#elif DEVICE_TYPE == DEVICE_CGDK2
+				show_batt_cgdk2();
 #else
 				show_small_number((battery_level >= 100) ? 99 : battery_level, 1);
-#endif // (DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
+#endif
 				set_small_number_and_bat = false;
 			} else if (cfg.flg.blinking_time_smile) { // blinking on
 #if	USE_CLOCK
@@ -448,7 +454,7 @@ _attribute_ram_code_ __attribute__((optimize("-Os"))) void lcd(void) {
 			show_smiley(*((uint8_t *) &ext.flg));
 		if (set_small_number_and_bat) {
 			show_battery_symbol(ext.flg.battery);
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
+#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK2) || (DEVICE_TYPE == DEVICE_CGDK22)
 			show_small_number_x10(ext.small_number, ext.flg.percent_on);
 #else
 			show_small_number(ext.small_number, ext.flg.percent_on);
@@ -466,22 +472,22 @@ _attribute_ram_code_ __attribute__((optimize("-Os"))) void lcd(void) {
 			}
 #endif
 			if (cfg.flg.show_batt_enabled
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
+#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK22)
 #else
 				|| battery_level <= 15
 #endif
 				) { // Battery
 				show_smiley(0); // stage show battery
 				show_battery_symbol(1);
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
 #if DEVICE_TYPE == DEVICE_CGG1
 				show_batt_cgg1();
-#else
+#elif DEVICE_TYPE == DEVICE_CGDK22
 				show_batt_cgdk22();
-#endif
+#elif DEVICE_TYPE == DEVICE_CGDK2
+				show_batt_cgdk2();
 #else
 				show_small_number((battery_level >= 100) ? 99 : battery_level, 1);
-#endif // (DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
+#endif
 				set_small_number_and_bat = false;
 			} else if (cfg.flg.blinking_time_smile) { // blinking on
 #if	USE_CLOCK
@@ -504,7 +510,7 @@ _attribute_ram_code_ __attribute__((optimize("-Os"))) void lcd(void) {
 				show_smiley(cfg.flg2.smiley); // no blinking
 		}
 		if (set_small_number_and_bat) {
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22)
+#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
 			show_battery_symbol(!cfg.flg.show_batt_enabled);
 			show_small_number_x10((measured_data.humi + 5) / 10, 1);
 #else
