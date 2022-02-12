@@ -336,16 +336,6 @@ _attribute_ram_code_ __attribute__((optimize("-Os"))) void show_small_number_x10
 	}
 }
 
-void show_batt_cgdk22(void) {
-	uint16_t battery_level = 0;
-	if(measured_data.battery_mv > MIN_VBAT_MV) {
-		battery_level = ((measured_data.battery_mv - MIN_VBAT_MV)*10)/((MAX_VBAT_MV - MIN_VBAT_MV)/100);
-		if(battery_level > 995)
-			battery_level = 995;
-	}
-	show_small_number_x10(battery_level, false);
-}
-
 #if	USE_CLOCK
 _attribute_ram_code_ void show_clock(void) {
 	uint32_t tmp = utc_time_sec / 60;

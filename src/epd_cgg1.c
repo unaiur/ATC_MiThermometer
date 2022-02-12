@@ -324,16 +324,6 @@ void init_lcd(void) {
     // EPD_BUSY: Low 866 us
 }
 
-void show_batt_cgg1(void) {
-	uint16_t battery_level = 0;
-	if(measured_data.battery_mv > MIN_VBAT_MV) {
-		battery_level = ((measured_data.battery_mv - MIN_VBAT_MV)*10)/((MAX_VBAT_MV - MIN_VBAT_MV)/100);
-		if(battery_level > 995)
-			battery_level = 995;
-	}
-	show_small_number_x10(battery_level, false);
-}
-
 _attribute_ram_code_ void update_lcd(void){
 	if(memcmp(&display_cmp_buff, &display_buff, sizeof(display_buff))) {
 		memcpy(&display_cmp_buff, &display_buff, sizeof(display_buff));

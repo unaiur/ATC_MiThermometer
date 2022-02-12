@@ -473,18 +473,6 @@ _attribute_ram_code_ void show_small_number_x10(int16_t number, bool percent)
 }
 
 
-_attribute_ram_code_ void show_batt_cgdk2(void)
-{
-    uint16_t battery_level = 0;
-    if(measured_data.battery_mv > MIN_VBAT_MV) {
-        battery_level = ((measured_data.battery_mv - MIN_VBAT_MV)*10)/((MAX_VBAT_MV - MIN_VBAT_MV)/100);
-        if (battery_level > 999) {
-            battery_level = 999;
-        }
-    }
-    show_small_number_x10(battery_level, false);
-}
-
 #if USE_CLOCK
 _attribute_ram_code_ void show_clock(void)
 {
