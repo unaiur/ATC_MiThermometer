@@ -23,9 +23,6 @@
 
 void app_enter_ota_mode(void);
 
-RAM uint32_t chow_tick_clk; // count show validity time, in clock
-RAM uint32_t chow_tick_sec; // count show validity time, in sec
-RAM uint8_t show_stage; // count/stage update lcd code buffer
 RAM lcd_flg_t lcd_flg;
 
 RAM measured_data_t measured_data;
@@ -72,25 +69,23 @@ const cfg_t def_cfg = {
 		.flg.advertising_type = ADV_TYPE_DEFAULT,
 		.flg.tx_measures = false,
 		.advertising_interval = 40, // multiply by 62.5 ms = 2.5 sec
-#if DEVICE_TYPE == DEVICE_LYWSD03MMC
+#if DISPLAY_TYPE == EPD
+		.measure_interval = 8, // * advertising_interval = 20 sec
+		.min_step_time_update_lcd = 199, //x0.05 sec,   9.95 sec
+#else
 		.measure_interval = 4, // * advertising_interval = 10 sec
 		.min_step_time_update_lcd = 49, //x0.05 sec,   2.45 sec
+#endif
+
+#if DEVICE_TYPE == DEVICE_LYWSD03MMC
 		.hw_cfg.hwver = 0,
 #elif DEVICE_TYPE == DEVICE_MHO_C401
-		.measure_interval = 8, // * advertising_interval = 20 sec
-		.min_step_time_update_lcd = 199, //x0.05 sec,   9.95 sec
 		.hw_cfg.hwver = 1,
 #elif DEVICE_TYPE == DEVICE_CGG1
-		.measure_interval = 8, // * advertising_interval = 20 sec
-		.min_step_time_update_lcd = 199, //x0.05 sec,   9.95 sec
 		.hw_cfg.hwver = 2,
 #elif DEVICE_TYPE == DEVICE_CGDK22
-		.measure_interval = 4, // * advertising_interval = 10 sec
-		.min_step_time_update_lcd = 49, //x0.05 sec,   2.45 sec
 		.hw_cfg.hwver = 6,
 #elif DEVICE_TYPE == DEVICE_CGDK2
-		.measure_interval = 4, // * advertising_interval = 10 sec
-		.min_step_time_update_lcd = 49, //x0.05 sec,   2.45 sec
 		.hw_cfg.hwver = 7,
 #endif
 #if USE_FLASH_MEMO || USE_CLOCK
@@ -98,10 +93,10 @@ const cfg_t def_cfg = {
 #endif
 #if USE_FLASH_MEMO
 		.hw_cfg.memo = 1,
-#if (DEVICE_TYPE == DEVICE_LYWSD03MMC) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
-		.averaging_measurements = 60, // * measure_interval = 10 * 60 = 600 sec = 10 minutes
-#else // DEVICE_TYPE == DEVICE_MHO_C401 & DEVICE_CGG1
+#if DISPLAY_TYPE == EPD
 		.averaging_measurements = 30, // * measure_interval = 20 * 30 = 600 sec = 10 minutes
+#else
+		.averaging_measurements = 60, // * measure_interval = 10 * 60 = 600 sec = 10 minutes
 #endif
 #endif
 		.rf_tx_power = RF_POWER_P0p04dBm, // RF_POWER_P3p01dBm,
@@ -153,16 +148,8 @@ static void set_hw_version(void) {
 		cfg.hw_cfg.hwver = 4; // HW:B1.6
 		my_HardStr[3] = '6';
 	}
-#elif DEVICE_TYPE == DEVICE_MHO_C401
-	cfg.hw_cfg.hwver = 1;
-#elif DEVICE_TYPE == DEVICE_CGG1
-	cfg.hw_cfg.hwver = 2;
-#elif DEVICE_TYPE == DEVICE_CGDK22
-	cfg.hw_cfg.hwver = 6;
-#elif DEVICE_TYPE == DEVICE_CGDK2
-	cfg.hw_cfg.hwver = 7;
 #else
-	cfg.hw_cfg.hwver = 4;
+	cfg.hw_cfg.hwver = def_cfg.hw_cfg.hwver;
 #endif
 }
 
@@ -287,14 +274,14 @@ void low_vbat(void) {
 		soft_reset_sensor();
 	show_temp_symbol(0);
 	show_big_number_x10(measured_data.battery_mv * 10);
-#if (DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
-	show_small_number_x10(-1023, 1); // "Lo"
-#else
+#if	DISPLAY_SMALL_DECIMALS == 0
 	show_small_number(-123, 1); // "Lo"
+#else
+	show_small_number_x10(-1023, 1); // "Lo"
 #endif
 	show_battery_symbol(1);
 	update_lcd();
-#if (DEVICE_TYPE == DEVICE_MHO_C401) || (DEVICE_TYPE == DEVICE_CGG1)
+#if DISPLAY_TYPE == EPD
 	while(task_lcd()) pm_wait_ms(10);
 #endif
 	cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER,
@@ -390,7 +377,7 @@ void user_init_normal(void) {//this will get executed one time after power up
 	check_battery();
 	WakeupLowPowerCb(0);
 	lcd();
-#if (DEVICE_TYPE == DEVICE_LYWSD03MMC) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
+#if DISPLAY_TYPE == LCD
 	update_lcd();
 #endif
 	start_measure = 1;
@@ -403,130 +390,6 @@ _attribute_ram_code_ void user_init_deepRetn(void) {//after sleep this will get 
 	rf_set_power_level_index(cfg.rf_tx_power);
 	blc_ll_recoverDeepRetention();
 	bls_ota_registerStartCmdCb(app_enter_ota_mode);
-}
-
-_attribute_ram_code_ uint8_t is_comfort(int16_t t, uint16_t h) {
-	uint8_t ret = SMILE_SAD;
-	if(t >= cmf.t[0] && t <= cmf.t[1] && h >= cmf.h[0] && h <= cmf.h[1])
-		ret = SMILE_HAPPY;
-	return ret;
-}
-
-_attribute_ram_code_ __attribute__((optimize("-Os"))) void lcd(void) {
-	bool set_small_number_and_bat = true;
-	while (chow_tick_sec && clock_time() - chow_tick_clk
-			> CLOCK_16M_SYS_TIMER_CLK_1S) {
-		chow_tick_clk += CLOCK_16M_SYS_TIMER_CLK_1S;
-		chow_tick_sec--;
-	}
-	show_stage++;
-	if (chow_tick_sec && (show_stage & 2)) { // show ext data
-		if (show_stage & 1) { // stage blinking or show battery or clock
-			if (cfg.flg.show_batt_enabled
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
-#else
-				|| battery_level <= 15
-#endif
-				) { // Battery
-				show_smiley(0); // stage show battery
-				show_battery_symbol(1);
-#if DEVICE_TYPE == DEVICE_CGG1
-				show_batt_cgg1();
-#elif DEVICE_TYPE == DEVICE_CGDK22
-				show_batt_cgdk22();
-#elif DEVICE_TYPE == DEVICE_CGDK2
-				show_batt_cgdk2();
-#else
-				show_small_number((battery_level >= 100) ? 99 : battery_level, 1);
-#endif
-				set_small_number_and_bat = false;
-			} else if (cfg.flg.blinking_time_smile) { // blinking on
-#if	USE_CLOCK
-				show_clock(); // stage clock
-				show_ble_symbol(ble_connected);
-				return;
-#else
-				show_smiley(0); // stage blinking and blinking on
-#endif
-			} else
-				show_smiley(*((uint8_t *) &ext.flg));
-		} else
-			show_smiley(*((uint8_t *) &ext.flg));
-		if (set_small_number_and_bat) {
-			show_battery_symbol(ext.flg.battery);
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK2) || (DEVICE_TYPE == DEVICE_CGDK22)
-			show_small_number_x10(ext.small_number, ext.flg.percent_on);
-#else
-			show_small_number(ext.small_number, ext.flg.percent_on);
-#endif
-		}
-		show_temp_symbol(*((uint8_t *) &ext.flg));
-		show_big_number_x10(ext.big_number);
-	} else {
-		if (show_stage & 1) { // stage blinking or show battery
-#if	USE_CLOCK
-			if (cfg.flg.blinking_time_smile && (show_stage & 2)) {
-				show_clock(); // stage clock
-				show_ble_symbol(ble_connected);
-				return;
-			}
-#endif
-			if (cfg.flg.show_batt_enabled
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK22)
-#else
-				|| battery_level <= 15
-#endif
-				) { // Battery
-				show_smiley(0); // stage show battery
-				show_battery_symbol(1);
-#if DEVICE_TYPE == DEVICE_CGG1
-				show_batt_cgg1();
-#elif DEVICE_TYPE == DEVICE_CGDK22
-				show_batt_cgdk22();
-#elif DEVICE_TYPE == DEVICE_CGDK2
-				show_batt_cgdk2();
-#else
-				show_small_number((battery_level >= 100) ? 99 : battery_level, 1);
-#endif
-				set_small_number_and_bat = false;
-			} else if (cfg.flg.blinking_time_smile) { // blinking on
-#if	USE_CLOCK
-				show_clock(); // stage clock
-				show_ble_symbol(ble_connected);
-				return;
-#else
-				show_smiley(0); // stage blinking and blinking on
-#endif
-			} else {
-				if (cfg.flg.comfort_smiley) { // no blinking on + comfort
-					show_smiley(is_comfort(measured_data.temp, measured_data.humi));
-				} else
-					show_smiley(cfg.flg2.smiley); // no blinking
-			}
-		} else {
-			if (cfg.flg.comfort_smiley) { // no blinking on + comfort
-				show_smiley(is_comfort(measured_data.temp, measured_data.humi));
-			} else
-				show_smiley(cfg.flg2.smiley); // no blinking
-		}
-		if (set_small_number_and_bat) {
-#if	(DEVICE_TYPE == DEVICE_CGG1) || (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
-			show_battery_symbol(!cfg.flg.show_batt_enabled);
-			show_small_number_x10((measured_data.humi + 5) / 10, 1);
-#else
-			show_battery_symbol(0);
-			show_small_number(last_humi, 1);
-#endif
-		}
-		if (cfg.flg.temp_F_or_C) {
-			show_temp_symbol(TMP_SYM_F); // "°F"
-			show_big_number_x10((((measured_data.temp / 5) * 9) + 3200) / 10); // convert C to F
-		} else {
-			show_temp_symbol(TMP_SYM_C); // "°C"
-			show_big_number_x10(last_temp);
-		}
-	}
-	show_ble_symbol(ble_connected);
 }
 
 //----------------------- main_loop()
@@ -614,7 +477,7 @@ _attribute_ram_code_ void main_loop(void) {
 					tim_measure = new;
 					start_measure = 1;
 				}
-#if (DEVICE_TYPE == DEVICE_CGG1) // Can be bypassed by measurements when there is no E-Ink update (https://github.com/pvvx/ATC_MiThermometer/issues/180)
+#if DISPLAY_TYPE == EPD // Can be bypassed by measurements when there is no E-Ink update (https://github.com/pvvx/ATC_MiThermometer/issues/180)
 				else
 #endif
 				if (new - tim_last_chow >= min_step_time_update_lcd) {
@@ -622,7 +485,7 @@ _attribute_ram_code_ void main_loop(void) {
 						lcd_flg.b.new_update = lcd_flg.b.notify_on;
 						lcd();
 					}
-#if (DEVICE_TYPE == DEVICE_MHO_C401) || (DEVICE_TYPE == DEVICE_CGG1)
+#if DISPLAY_TYPE == EPD
 					if(!stage_lcd)
 #endif
 						update_lcd();
@@ -636,7 +499,7 @@ _attribute_ram_code_ void main_loop(void) {
 			if(adv_old_count != adv_send_count)
 				set_adv_data();
 		}
-#if (DEVICE_TYPE == DEVICE_MHO_C401) || (DEVICE_TYPE == DEVICE_CGG1)
+#if DISPLAY_TYPE == EPD
 		if(wrk_measure == 0 && stage_lcd) {
 			if(gpio_read(EPD_BUSY) && (!task_lcd())) {
 				cpu_set_gpio_wakeup(EPD_BUSY, Level_High, 0);  // pad high wakeup deepsleep disable

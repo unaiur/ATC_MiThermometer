@@ -4,6 +4,44 @@
 #include <stdint.h>
 #include "app_config.h"
 
+// SUPPORTED DISPLAY TYPES
+#define EPD 1 /* Electronic Paper Display */
+#define LCD 2 /* Liquid Cristal Display */
+
+// DISPLAY CONFIGURATION
+#if DEVICE_TYPE == DEVICE_MHO_C401
+#define DISPLAY_TYPE           EPD
+#define DISPLAY_BUFF_LEN       18
+#define DISPLAY_BATTERY_LEVELS 0
+#define DISPLAY_SMALL_DECIMALS 0
+
+#elif DEVICE_TYPE == DEVICE_CGG1
+#define DISPLAY_TYPE           EPD
+#define DISPLAY_BUFF_LEN       18
+#define DISPLAY_BATTERY_LEVELS 5
+#define DISPLAY_SMALL_DECIMALS 1
+
+#elif DEVICE_TYPE == DEVICE_LYWSD03MMC
+#define DISPLAY_TYPE           LCD
+#define DISPLAY_BUFF_LEN       6
+#define DISPLAY_BATTERY_LEVELS 0
+#define DISPLAY_SMALL_DECIMALS 0
+
+#elif DEVICE_TYPE == DEVICE_CGDK2
+#define DISPLAY_TYPE           LCD
+#define DISPLAY_BUFF_LEN       12
+#define DISPLAY_BATTERY_LEVELS 5
+#define DISPLAY_SMALL_DECIMALS 1
+
+#elif DEVICE_TYPE == DEVICE_CGDK22
+#define DISPLAY_TYPE           LCD
+#define DISPLAY_BUFF_LEN       18
+#define DISPLAY_BATTERY_LEVELS 5
+#define DISPLAY_SMALL_DECIMALS 1
+#else
+#error "Set DEVICE_TYPE!"
+#endif
+
 /* CGG1 no symbol 'smiley' ! */
 #define SMILE_HAPPY 5 		// "(^-^)" happy
 #define SMILE_SAD   6 		// "(-^-)" sad
@@ -58,28 +96,16 @@ void show_ble_symbol(bool state);
 void show_clock(void);
 #endif
 
-#if DEVICE_TYPE == DEVICE_MHO_C401
-extern uint8_t display_buff[18];
-extern uint8_t stage_lcd;
-void show_small_number(int16_t number, bool percent); // -9 .. 99
-int task_lcd(void);
-#elif DEVICE_TYPE == DEVICE_CGG1
-extern uint8_t display_buff[18];
-extern uint8_t stage_lcd;
-void show_small_number_x10(int16_t number, bool percent); // -9 .. 99
-int task_lcd(void);
-void show_batt_cgg1(void);
-#elif DEVICE_TYPE == DEVICE_LYWSD03MMC
-extern uint8_t display_buff[6];
-void show_small_number(int16_t number, bool percent); // -9 .. 99
-#elif DEVICE_TYPE == DEVICE_CGDK2
-extern uint8_t display_buff[12];
-void show_batt_cgdk2(void);
-void show_small_number_x10(int16_t number, bool percent); // -9 .. 99
-#elif DEVICE_TYPE == DEVICE_CGDK22
-extern uint8_t display_buff[18];
-void show_batt_cgdk22(void);
+extern uint8_t display_buff[DISPLAY_BUFF_LEN];
+
+#if DISPLAY_SMALL_DECIMALS
 void show_small_number_x10(int16_t number, bool percent); // -9 .. 99
 #else
-#error "Set DEVICE_TYPE!"
+void show_small_number(int16_t number, bool percent); // -9 .. 99
+#endif
+
+
+#if DISPLAY_TYPE == EPD
+extern uint8_t stage_lcd;
+int task_lcd(void);
 #endif
