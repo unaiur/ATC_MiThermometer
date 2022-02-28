@@ -56,7 +56,7 @@ GCC_FLAGS := \
 
 INCLUDE_PATHS := -I$(TEL_PATH)/components -I$(PROJECT_PATH)
 
-GCC_FLAGS += $(TEL_CHIP)
+GCC_FLAGS += $(TEL_CHIP) -MMD
 
 LS_FLAGS := $(PROJECT_PATH)/boot.link
 
@@ -81,11 +81,12 @@ endif
 LST_FILE := $(OUT_PATH)/$(PROJECT_NAME).lst
 BIN_FILE := $(OUT_PATH)/../$(PROJECT_NAME).bin
 ELF_FILE := $(OUT_PATH)/$(PROJECT_NAME).elf
-
+DEPS = $(OBJS:.o=.d)
 SIZEDUMMY := sizedummy
 
 # All Target
-all: clean pre-build main-build
+all: pre-build main-build
+-include $(DEPS)
 
 flash: $(BIN_FILE)
 	@python3 $(PROJECT_PATH)/../TlsrPgm.py -pCOM8 -t50 -a2550 -m -w we 0 $(BIN_FILE)
@@ -107,7 +108,7 @@ $(ELF_FILE): $(OBJS) $(USER_OBJS)
 	@echo 'Building Standard target: $@'
 	@$(TC32_PATH)tc32-elf-ld --gc-sections -L $(TEL_PATH)/components/proj_lib -L $(OUT_PATH) -T $(LS_FLAGS) -o $(ELF_FILE) $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Building Reduced target: $@'
-	@$(TC32_PATH)tc32-elf-ld --gc-sections -Ttext `python3 $(PROJECT_PATH)/TlsrRetMemAddr.py -e $(ELF_FILE) -t $(TC32_PATH)tc32-elf-nm` -L $(TEL_PATH)/components/proj_lib -L $(OUT_PATH) -T $(LS_FLAGS) -o $(ELF_FILE) $(OBJS) $(USER_OBJS) $(LIBS)
+	@$(TC32_PATH)tc32-elf-ld --gc-sections -Ttext `python3 $(PROJECT_PATH)/TlsrRetMemAddr.py -e $(ELF_FILE) -t $(TC32_PATH)tc32-elf-nm` -L $(TEL_PATH)/components/proj_lib -L $(OUT_PATH) -T $(LS_FLAGS) -o $(ELF_FILE) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -128,7 +129,7 @@ sizedummy: $(ELF_FILE)
 	@python3 $(PROJECT_PATH)/TlsrMemInfo.py -t $(TC32_PATH)tc32-elf-nm $(ELF_FILE)
 
 clean:
-	-$(RM) $(FLASH_IMAGE) $(ELFS) $(OBJS) $(LST) $(SIZEDUMMY) $(ELF_FILE) $(BIN_FILE) $(LST_FILE)
+	-$(RM) $(FLASH_IMAGE) $(ELFS) $(OBJS) $(DEPS) $(LST) $(SIZEDUMMY) $(ELF_FILE) $(BIN_FILE) $(LST_FILE)
 	-@echo ' '
 
 
@@ -144,5 +145,5 @@ endif
 
 secondary-outputs: $(BIN_FILE) $(LST_FILE) $(SIZEDUMMY)
 
-.PHONY: all clean
+.PHONY: all clean pre-build sizedummy flash reset stop go
 .SECONDARY: main-build
