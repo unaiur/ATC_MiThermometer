@@ -42,35 +42,6 @@ enum {
 
 RAM blk_mi_keys_t keybuf;
 
-#if DEVICE_TYPE == DEVICE_MHO_C401
-uint32_t find_mi_keys(uint16_t chk_id, uint8_t cnt) {
-	uint32_t faddr = FLASH_MIKEYS_ADDR;
-	uint32_t faend = faddr + FLASH_SECTOR_SIZE;
-	pblk_mi_keys_t pk = &keybuf;
-	uint16_t id;
-	uint8_t len;
-	uint8_t fbuf[4];
-	do {
-		_flash_read(faddr, sizeof(fbuf), &fbuf);
-		len = fbuf[1];
-		id = fbuf[2] | (fbuf[3] << 8);
-		if(fbuf[0] == 0xA5) {
-			faddr += 8;
-			if(len <= sizeof(keybuf.data)
-				&& len > 0
-				&& id == chk_id
-				&& --cnt == 0) {
-					pk->klen = len;
-					_flash_read(faddr, len, &pk->data);
-					return faddr;
-			}
-		}
-		faddr += len + 0x0f;
-		faddr &= 0xfffffff0;
-	} while(id != 0xffff || len != 0xff  || faddr < faend);
-	return 0;
-}
-#else // DEVICE_LYWSD03MMC & DEVICE_CGG1 & DEVICE_CGDK22 & DEVICE_CGDK2
 /* if return != 0 -> keybuf = keys */
 uint32_t find_mi_keys(uint16_t chk_id, uint8_t cnt) {
 	uint32_t faddr = FLASH_MIKEYS_ADDR;
@@ -96,7 +67,6 @@ uint32_t find_mi_keys(uint16_t chk_id, uint8_t cnt) {
 	} while(id != 0xffff || len != 0xff  || faddr < faend);
 	return 0;
 }
-#endif
 
 uint8_t send_mi_key(void) {
 	if (blc_ll_getTxFifoNumber() < 9) {

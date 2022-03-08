@@ -27,11 +27,7 @@ static inline bool should_display_ext_data_layout() {
 }
 
 static inline bool should_display_temp_bat_layout() {
-#if	DISPLAY_BATTERY_LEVELS > 0
 	return cfg.flg.show_batt_enabled;
-#else
-	return cfg.flg.show_batt_enabled || battery_level < 15;
-#endif
 }
 
 static inline bool should_display_clock_layout() {
@@ -49,13 +45,8 @@ static inline int get_display_layouts() {
 static inline void display_ext_data_layout(void) {
 	show_battery_symbol(ext.flg.battery);
 	show_temp_symbol(*((uint8_t *) &ext.flg));
-	show_smiley(*((uint8_t *) &ext.flg));
 	show_big_number_x10(ext.big_number);
-#if	DISPLAY_SMALL_DECIMALS > 0
 	show_small_number_x10(ext.small_number, ext.flg.percent_on);
-#else
-	show_small_number(ext.small_number, ext.flg.percent_on);
-#endif
 }
 
 // Show temperature in Fahrenheit or Celsius degrees in the big number
@@ -73,11 +64,7 @@ static _attribute_ram_code_ void display_temperature() {
 static inline void display_temperature_battery_layout() {
 	display_temperature();
 	show_battery_symbol(1);
-	show_smiley(0);
 
-#if	DISPLAY_SMALL_DECIMALS == 0
-	show_small_number((battery_level >= 100) ? 99 : battery_level, DISPLAY_BATTERY_LEVELS == 0);
-#else
 	uint16_t battery_level = 0;
 	if(measured_data.battery_mv > MIN_VBAT_MV) {
 		battery_level = ((measured_data.battery_mv - MIN_VBAT_MV)*10)/((MAX_VBAT_MV - MIN_VBAT_MV)/100);
@@ -85,30 +72,13 @@ static inline void display_temperature_battery_layout() {
 			battery_level = 999;
 		}
 	}
-	show_small_number_x10(battery_level, DISPLAY_BATTERY_LEVELS == 0);
-#endif
-}
-
-static inline uint8_t get_smiley(int16_t t, int16_t h) {
-	if (!cfg.flg.comfort_smiley) {
-		return cfg.flg2.smiley;
-	}
-	if (t >= cmf.t[0] && t <= cmf.t[1] && h >= cmf.h[0] && h <= cmf.h[1]) {
-		return SMILE_HAPPY;
-	}
-	return SMILE_SAD;
+	show_small_number_x10(battery_level, false);
 }
 
 static inline void display_temperature_humidity_layout() {
 	display_temperature();
-	show_battery_symbol(DISPLAY_BATTERY_LEVELS > 0);
-	show_smiley(get_smiley(measured_data.temp, measured_data.humi));
-
-#if	DISPLAY_SMALL_DECIMALS == 0
-	show_small_number(last_humi, 1);
-#else
+	show_battery_symbol(true);
 	show_small_number_x10((measured_data.humi + 5) / 10, 1);
-#endif
 }
 
  _attribute_ram_code_ void lcd(void) {
@@ -131,8 +101,6 @@ static inline void display_temperature_humidity_layout() {
 		available_layouts ^= DISPLAY_CLOCK;
 #if	USE_CLOCK
 		show_clock();
-#else
-		show_smiley(0);
 #endif
 	}
 }

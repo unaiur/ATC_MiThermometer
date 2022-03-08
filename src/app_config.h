@@ -7,13 +7,10 @@ extern "C" {
 #define VERSION 0x35	 // BCD format (0x34 -> '3.4')
 #define EEP_SUP_VER 0x09 // EEP data minimum supported version
 
-#define DEVICE_LYWSD03MMC   0x055B	// LCD display LYWSD03MMC
-#define DEVICE_MHO_C401   	0x0387	// E-Ink display MHO-C401
 #define DEVICE_CGG1 		0x0B48  // E-Ink display CGG1-M "Qingping Temp & RH Monitor"
 #define DEVICE_CGDK2 		0x066F  // LCD display CGDK2 "Qingping Temp & RH Monitor Lite"
-#define DEVICE_CGDK22 		0x066E  // DIY, LCD display "Qingping Temp & RH Monitor Lite LE" + Module TB-04
 
-#define DEVICE_TYPE			DEVICE_LYWSD03MMC // Some of the above
+#define DEVICE_TYPE			DEVICE_CGDK2
 
 // Special DIY version LYWSD03MMC - Voltage Logger:
 // Temperature 0..36.00 = ADC pin PB7 input 0..3.6V, pcb mark "B1"
@@ -34,75 +31,7 @@ extern "C" {
 #define USE_MIHOME_BEACON			1 // = 1 Compatible with MiHome beacon encryption
 #define USE_NEW_OTA					0 // = 1 keeping the old firmware, erasing the region when updating (test version only!)
 
-#if DEVICE_TYPE == DEVICE_MHO_C401
-
-// TLSR8251F512ET24
-// GPIO_PA5 - used EPD_SHD
-// GPIO_PA6 - used EPD_RST
-// GPIO_PA7 - SWS, free
-// GPIO_PB6 - used KEY, pcb mark "P5"
-// GPIO_PB7 - used EPD_SDA
-// GPIO_PC2 - SDA, used I2C
-// GPIO_PC3 - SCL, used I2C
-// GPIO_PC4 - used EPD_SHD
-// GPIO_PD2 - used EPD_CSB
-// GPIO_PD7 - used EPD_SCL
-
-#define SHL_ADC_VBAT	1  // "B0P" in adc.h
-#define GPIO_VBAT	GPIO_PB0 // missing pin on case TLSR8251F512ET24
-
-#define I2C_SCL 	GPIO_PC2
-#define I2C_SDA 	GPIO_PC3
-#define I2C_GROUP 	I2C_GPIO_GROUP_C2C3
-
-#define EPD_SHD				GPIO_PC4 // should be high
-#define PULL_WAKEUP_SRC_PC4 PM_PIN_PULLUP_10K
-
-#define EPD_BUSY			GPIO_PA5
-#define PULL_WAKEUP_SRC_PA5 PM_PIN_PULLUP_1M
-#define PA5_INPUT_ENABLE	1
-#define PA5_FUNC			AS_GPIO
-
-#define EPD_RST				GPIO_PA6
-#define PULL_WAKEUP_SRC_PA6 PM_PIN_PULLUP_1M
-#define PA6_INPUT_ENABLE	1
-#define PA6_DATA_OUT		1
-#define PA6_OUTPUT_ENABLE	1
-#define PA6_FUNC			AS_GPIO
-
-#define EPD_CSB				GPIO_PD2
-#define PULL_WAKEUP_SRC_PD2 PM_PIN_PULLUP_1M
-#define PD2_INPUT_ENABLE	1
-#define PD2_DATA_OUT		1
-#define PD2_OUTPUT_ENABLE	1
-#define PD2_FUNC			AS_GPIO
-
-#define EPD_SDA				GPIO_PB7
-#define PULL_WAKEUP_SRC_PB7 PM_PIN_PULLDOWN_100K // PM_PIN_PULLUP_1M
-#define PB7_INPUT_ENABLE	1
-#define PB7_DATA_OUT		1
-#define PB7_OUTPUT_ENABLE	1
-#define PB7_FUNC			AS_GPIO
-
-#define EPD_SCL				GPIO_PD7
-#define PULL_WAKEUP_SRC_PD7 PM_PIN_PULLDOWN_100K // PM_PIN_PULLUP_1M
-#define PD7_INPUT_ENABLE	1
-#define PD7_DATA_OUT		0
-#define PD7_OUTPUT_ENABLE	1
-#define PD7_FUNC			AS_GPIO
-
-#if USE_TRIGGER_OUT
-
-#define GPIO_TRG			GPIO_PB6	// pcb mark "P5"
-#define PB6_INPUT_ENABLE	1
-#define PB6_DATA_OUT		0
-#define PB6_OUTPUT_ENABLE	0
-#define PB6_FUNC			AS_GPIO
-#define PULL_WAKEUP_SRC_PB6	PM_PIN_PULLDOWN_100K
-
-#endif // USE_TRIGGER_OUT
-
-#elif DEVICE_TYPE == DEVICE_CGG1
+#if DEVICE_TYPE == DEVICE_CGG1
 
 // TLSR8253F512ET32
 // GPIO_PA0 - used EPD_RST
@@ -187,62 +116,7 @@ extern "C" {
 
 #endif // USE_TRIGGER_OUT
 
-#elif DEVICE_TYPE == DEVICE_LYWSD03MMC
-
-// TLSR8251F512ET24
-// GPIO_PA5 - DM, free, pcb mark "reset" (TRG)
-// GPIO_PA6 - DP, free, pcb mark "P8" (RDS)
-// GPIO_PA7 - SWS, free, pcb mark "P14"
-// GPIO_PB6 - used LCD, set "1"
-// GPIO_PB7 - free, pcb mark "B1" (ADC)
-// GPIO_PC2 - SDA, used I2C, pcb mark "P12"
-// GPIO_PC3 - SCL, used I2C, pcb mark "P15"
-// GPIO_PC4 - free, pcb mark "P9" (PWM)
-// GPIO_PD2 - CS/PWM, free
-// GPIO_PD7 - free [B1.4], pcb mark "P7" (UART TX LCD [B1.6])
-
-#define SHL_ADC_VBAT	1  // "B0P" in adc.h
-#define GPIO_VBAT	GPIO_PB0 // missing pin on case TLSR8251F512ET24
-
-#define I2C_SCL 	GPIO_PC2
-#define I2C_SDA 	GPIO_PC3
-#define I2C_GROUP 	I2C_GPIO_GROUP_C2C3
-
-#if USE_TRIGGER_OUT
-
-#define GPIO_TRG			GPIO_PA5	// Trigger, output, pcb mark "reset"
-#define PA5_INPUT_ENABLE	1
-#define PA5_DATA_OUT		0
-#define PA5_OUTPUT_ENABLE	0
-#define PA5_FUNC			AS_GPIO
-#define PULL_WAKEUP_SRC_PA5	PM_PIN_PULLDOWN_100K
-
-#define GPIO_RDS 			GPIO_PA6	// Reed Switch, input, pcb mark "P8"
-#define PA6_INPUT_ENABLE	1
-#define PA6_DATA_OUT		0
-#define PA6_OUTPUT_ENABLE	0
-#define PA6_FUNC			AS_GPIO
-
-#define PULL_WAKEUP_SRC_PD7	PM_PIN_PULLUP_1M // UART TX (B1.6)
-//#define PD7_INPUT_ENABLE	1
-//#define PD7_FUNC			AS_UART
-
-#if DIY_ADC_TO_TH_LYWSD03MMC // Special version: Temperature 0..36 = ADC pin PB7 input 0..3.6В, pcb mark "B1"
-#define GPIO_ADC1 			GPIO_PB7	// ADC input, pcb mark "B1"
-#define PB7_OUTPUT_ENABLE	0
-#define PB7_FUNC			AS_ADC
-#endif
-
-#if DIY_ADC_TO_TH_LYWSD03MMC // Special version: Humidity 0..36 = ADC pin PC4 input 0..3.6В, pcb mark "P9"
-#define GPIO_ADC2 			GPIO_PC4	// ADC input, pcb mark "P9"
-#define PC4_OUTPUT_ENABLE	0
-#define PC4_DATA_STRENGTH	0
-#define PC4_FUNC			AS_GPIO
-#endif
-
-#endif // USE_TRIGGER_OUT
-
-#elif (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
+#elif DEVICE_TYPE == DEVICE_CGDK2
 // They are almost the same, but changes the LCD
 
 // TLSR8253F512ET32

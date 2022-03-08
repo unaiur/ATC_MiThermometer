@@ -29,11 +29,9 @@ RAM my_fifo_t blt_rxfifo = { 64, 8, 0, 0, blt_rxfifo_b, };
 RAM uint8_t blt_txfifo_b[40 * 16] = { 0 };
 RAM my_fifo_t blt_txfifo = { 40, 16, 0, 0, blt_txfifo_b, };
 RAM uint8_t ble_name[32] = { 11, 0x09,
-#if DEVICE_TYPE == DEVICE_MHO_C401
-		'M', 'H', 'O', '_', '0', '0', '0', '0',	'0', '0' };
-#elif DEVICE_TYPE == DEVICE_CGG1
+#if DEVICE_TYPE == DEVICE_CGG1
 		'C', 'G', 'G', '_', '0', '0', '0', '0',	'0', '0' };
-#elif (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
+#elif DEVICE_TYPE == DEVICE_CGDK2
 		'C', 'G', 'D', '_', '0', '0', '0', '0',	'0', '0' };
 #else
 		'A', 'T', 'C', '_', '0', '0', '0', '0',	'0', '0' };
@@ -193,17 +191,12 @@ void ble_get_name(void) {
 	int16_t len = flash_read_cfg(&ble_name[2], EEP_ID_DVN, min(sizeof(ble_name)-3, 31-2));
 	if(len < 1) {
 		//Set the BLE Name to the last three MACs the first ones are always the same
-#if DEVICE_TYPE == DEVICE_MHO_C401
-		ble_name[2] = 'M';
-		ble_name[3] = 'H';
-		ble_name[4] = 'O';
-		ble_name[5] = '_';
-#elif DEVICE_TYPE == DEVICE_CGG1
+#if DEVICE_TYPE == DEVICE_CGG1
 		ble_name[2] = 'C';
 		ble_name[3] = 'G';
 		ble_name[4] = 'G';
 		ble_name[5] = '_';
-#elif (DEVICE_TYPE == DEVICE_CGDK22) || (DEVICE_TYPE == DEVICE_CGDK2)
+#elif DEVICE_TYPE == DEVICE_CGDK2
 		ble_name[2] = 'C';
 		ble_name[3] = 'G';
 		ble_name[4] = 'D';
@@ -345,7 +338,7 @@ __attribute__((optimize("-Os"))) void init_ble(void) {
 	mi_beacon_init();
 #endif
 
-#if 0 // BLE_SECURITY_ENABLE && DEVICE_TYPE != DEVICE_MHO_C401
+#if 0 // BLE_SECURITY_ENABLE
 	if(pincode && *((u32 *)(CFG_ADR_BIND)) != 0xffffffff) {
 		smp_param_save_t  bondInfo;
 		u8 bond_number = blc_smp_param_getCurrentBondingDeviceNumber();  //get bonded device number

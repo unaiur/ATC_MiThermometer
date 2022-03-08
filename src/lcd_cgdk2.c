@@ -374,19 +374,6 @@ _attribute_ram_code_ void show_temp_symbol(uint8_t symbol)
     set_lcd_bit(SYM_TEMP_UNDERSCORE, symbol & 0x80);
 }
 
-/* 0 = "     " off,
- * 1 = " ^-^ "
- * 2 = " -^- "
- * 3 = " ooo "
- * 4 = "(   )"
- * 5 = "(^-^)" happy
- * 6 = "(-^-)" sad
- * 7 = "(ooo)" */
-_attribute_ram_code_ void show_smiley(uint8_t state)
-{
-    // No smiley in this LCD
-}
-
 _attribute_ram_code_ void show_ble_symbol(bool state)
 {
     set_lcd_bit(SYM_BLUETOOTH, state);

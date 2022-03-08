@@ -71,7 +71,7 @@ typedef struct __attribute__((packed)) _cfg_t {
 	uint8_t connect_latency; // +1 x0.02 sec ( = connection interval), Tmin = 1*20 = 20 ms, Tmax = 256 * 20 = 5120 ms
 	uint8_t min_step_time_update_lcd; // x0.05 sec, 0.5..12.75 sec (10..255)
 	struct __attribute__((packed)) {
-		uint8_t hwver		: 3; // 0 - LYWSD03MMC B1.4, 1 - MHO-C401, 2 - CGG1, 3 - LYWSD03MMC B1.6, 4 - LYWSD03MMC B1.9, 5 - LYWSD03MMC B1.7
+		uint8_t hwver		: 3; // 2 - CGG1, 7 - CGDK2
 		uint8_t clock		: 1; // clock
 		uint8_t memo		: 1; // flash write measures
 		uint8_t trg			: 1; // trigger out

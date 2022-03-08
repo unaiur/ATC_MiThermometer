@@ -99,15 +99,6 @@ _attribute_ram_code_ void show_temp_symbol(uint8_t symbol) {
 		display_buff[1] &= ~BIT(5); // "_"
 }
 
-/* CGG1 no symbol 'smiley' !
- * =5 -> "---" happy, != 5 -> "    " sad */
-_attribute_ram_code_ void show_smiley(uint8_t state){
-	if(state & 1)
-		display_buff[7] |= BIT(2);
-	else
-		display_buff[7] &= ~BIT(2);
-}
-
 _attribute_ram_code_ void show_battery_symbol(bool state){
 	display_buff[5] &= ~(BIT(5) | BIT(6));
 	display_buff[6] &= ~(BIT(1) | BIT(7));

@@ -83,38 +83,17 @@ static const u8 my_ManCharVal[5] = {
 	U16_LO(DeviceInformation_ManName_DP_H), U16_HI(DeviceInformation_ManName_DP_H),
 	U16_LO(CHARACTERISTIC_UUID_MANUFACTURER_NAME), U16_HI(CHARACTERISTIC_UUID_MANUFACTURER_NAME)
 };
-#if DEVICE_TYPE == DEVICE_MHO_C401
-static const u8 my_ModelStr[] = {"MHO-C401"};
-static const u8 my_SerialStr[] = {"G-19-000000000000000"};
-static const u8 my_FirmStr[] = {"github.com/pvvx"}; // "1.0.0_0010"
-static const u8 my_HardStr[] = {"V_14"};
-static const u8 my_SoftStr[] = {'V','0'+(VERSION>>4),'.','0'+(VERSION&0x0f)}; // "0110"
-static const u8 my_ManStr[] = {"miaomiaoce.com"};
-#elif DEVICE_TYPE == DEVICE_LYWSD03MMC
-static const u8 my_ModelStr[] = {"LYWSD03MMC"};
-static const u8 my_SerialStr[] = {"F1.0-CFMK-LB-ZCXTJ--"};
-static const u8 my_FirmStr[] = {"github.com/pvvx"}; // "1.0.0_0109"
-RAM u8 my_HardStr[4];// = {"B1.4"};
-static const u8 my_SoftStr[] = {'V','0'+(VERSION>>4),'.','0'+(VERSION&0x0f)}; // "0109"
-static const u8 my_ManStr[] = {"miaomiaoce.com"};
-#elif DEVICE_TYPE == DEVICE_CGG1
+#if DEVICE_TYPE == DEVICE_CGG1
 static const u8 my_ModelStr[] = {"CGG1"};
 static const u8 my_SerialStr[] = {"1234"};
-static const u8 my_FirmStr[] = {"github.com/pvvx"}; // "1.0.1_0093"
+static const u8 my_FirmStr[] = {"github.com/unaiur"}; // "1.0.1_0093"
 static const u8 my_HardStr[] = {"0001"};
 static const u8 my_SoftStr[] = {'V','0'+(VERSION>>4),'.','0'+(VERSION&0x0f)}; // "0109"
-static const u8 my_ManStr[] = {"Qingping Technology (Beijing) Co., Ltd."};
-#elif DEVICE_TYPE == DEVICE_CGDK22
-static const u8 my_ModelStr[] = {"CGDK2-2"};
-static const u8 my_SerialStr[] = {"0001"};
-static const u8 my_FirmStr[] = {"github.com/pvvx"};
-static const u8 my_HardStr[] = {"DIY01"};
-static const u8 my_SoftStr[] = {'V','0'+(VERSION>>4),'.','0'+(VERSION&0x0f)};
 static const u8 my_ManStr[] = {"Qingping Technology (Beijing) Co., Ltd."};
 #elif DEVICE_TYPE == DEVICE_CGDK2
 static const u8 my_ModelStr[] = {"CGDK2"};
 static const u8 my_SerialStr[] = {"0001"};
-static const u8 my_FirmStr[] = {"github.com/pvvx"};
+static const u8 my_FirmStr[] = {"github.com/unaiur"};
 static const u8 my_HardStr[] = {"DUCK 2_D5_20200622"};
 static const u8 my_SoftStr[] = {'V','0'+(VERSION>>4),'.','0'+(VERSION&0x0f)};
 static const u8 my_ManStr[] = {"Qingping Technology (Beijing) Co., Ltd."};
