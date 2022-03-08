@@ -22,7 +22,6 @@ extern "C" {
 #define BLE_HOST_SMP_ENABLE BLE_SECURITY_ENABLE
 
 #define USE_TRIGGER_OUT 	1 // use trigger out (GPIO_PA5)
-#define USE_CLOCK 			1 // = 1 display clock, = 0 smile blinking
 #define USE_TIME_ADJUST		1 // = 1 time correction enabled
 #define USE_FLASH_MEMO		1 // = 1 flash logger enable
 

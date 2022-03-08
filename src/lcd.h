@@ -51,9 +51,6 @@ void show_battery_symbol(bool state);
 void show_big_number_x10(int16_t number); // x0.1, (-995..19995), point auto: -99 .. -9.9 .. 199.9 .. 1999
 void show_small_number_x10(int16_t number, bool percent); // -9 .. 99
 void show_ble_symbol(bool state);
-#if	USE_CLOCK
-void show_clock(void);
-#endif
 
 extern uint8_t display_buff[DISPLAY_BUFF_LEN];
 

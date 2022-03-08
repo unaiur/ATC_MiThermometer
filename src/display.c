@@ -14,7 +14,6 @@ enum display_layout {
 	DISPLAY_EXT_DATA  = BIT(0), // Display debug data received in BLE cmd
 	DISPLAY_TEMP_BAT  = BIT(1), // Display temperature and battery
 	DISPLAY_TEMP_HUMI = BIT(2), // Display temperature and humitity
-	DISPLAY_CLOCK     = BIT(3), // Display clock or blink the smiley
 };
 
 static inline bool should_display_ext_data_layout() {
@@ -37,9 +36,7 @@ static inline bool should_display_clock_layout() {
 static inline int get_display_layouts() {
 	return DISPLAY_TEMP_HUMI
 		| (should_display_ext_data_layout() ? DISPLAY_EXT_DATA : 0)
-		| (should_display_temp_bat_layout() ? DISPLAY_TEMP_BAT : 0)
-		| (should_display_clock_layout() ? DISPLAY_CLOCK : 0);
-
+		| (should_display_temp_bat_layout() ? DISPLAY_TEMP_BAT : 0);
 }
 
 static inline void display_ext_data_layout(void) {
@@ -97,11 +94,6 @@ static inline void display_temperature_humidity_layout() {
 	} else if (available_layouts & DISPLAY_TEMP_HUMI) {
 		available_layouts ^= DISPLAY_TEMP_HUMI;
 		display_temperature_humidity_layout();
-	} else if (available_layouts & DISPLAY_CLOCK) {
-		available_layouts ^= DISPLAY_CLOCK;
-#if	USE_CLOCK
-		show_clock();
-#endif
 	}
 }
 

@@ -30,8 +30,8 @@ enum {
 typedef struct __attribute__((packed)) _cfg_t {
 	struct __attribute__((packed)) {
 		uint8_t advertising_type	: 2; // 0 - atc1441, 1 - Custom (pvvx), 2 - Mi, 3 - all
-		uint8_t comfort_smiley		: 1;
-		uint8_t blinking_time_smile	: 1; //(USE_CLOCK = 0 - smile, =1 time)
+		uint8_t comfort_smiley		: 1; // unused
+		uint8_t blinking_time_smile	: 1; // unused
 		uint8_t temp_F_or_C			: 1;
 		uint8_t show_batt_enabled	: 1;
 		uint8_t tx_measures			: 1; // Send all measurements in connected mode
@@ -114,10 +114,10 @@ extern external_data_t ext;
 extern uint32_t chow_tick_clk; // count chow validity time, in clock
 extern uint32_t chow_tick_sec; // count chow validity time, in sec
 
-#if	USE_CLOCK || USE_FLASH_MEMO
+#if	USE_FLASH_MEMO
 extern uint32_t utc_time_sec;	// clock in sec (= 0 1970-01-01 00:00:00)
 #endif
-#if	USE_CLOCK && USE_TIME_ADJUST
+#if	USE_TIME_ADJUST
 extern uint32_t utc_time_tick_step; // adjust time clock (in 1/16 us for 1 sec)
 #endif
 

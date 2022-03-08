@@ -386,7 +386,7 @@ __attribute__((optimize("-Os"))) void cmd_parser(void * p) {
 				store_mi_keys(MI_KEYTBIND_SIZE, MI_KEYTBIND_ID, &req->dat[1]);
 			get_mi_keys(MI_KEY_STAGE_TBIND);
 			mi_key_stage = MI_KEY_STAGE_WAIT_SEND;
-#if USE_CLOCK || USE_FLASH_MEMO
+#if USE_FLASH_MEMO
 		} else if (cmd == CMD_ID_UTC_TIME) { // Get/set utc time
 			if(--len > sizeof(utc_time_sec)) len = sizeof(utc_time_sec);
 			if(len)

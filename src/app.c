@@ -45,7 +45,7 @@ RAM uint32_t min_step_time_update_lcd; // = cfg.min_step_time_update_lcd * 0.05 
 
 RAM uint32_t utc_time_sec;	// clock in sec (= 0 1970-01-01 00:00:00)
 RAM uint32_t utc_time_sec_tick;
-#if USE_CLOCK && USE_TIME_ADJUST
+#if USE_TIME_ADJUST
 RAM uint32_t utc_time_tick_step = CLOCK_16M_SYS_TIMER_CLK_1S; // adjust time clock (in 1/16 us for 1 sec)
 #else
 #define utc_time_tick_step CLOCK_16M_SYS_TIMER_CLK_1S
@@ -82,7 +82,7 @@ const cfg_t def_cfg = {
 #elif DEVICE_TYPE == DEVICE_CGDK2
 		.hw_cfg.hwver = 7,
 #endif
-#if USE_FLASH_MEMO || USE_CLOCK
+#if USE_FLASH_MEMO
 		.hw_cfg.clock = 1,
 #endif
 #if USE_FLASH_MEMO
@@ -167,7 +167,7 @@ __attribute__((optimize("-Os"))) void test_config(void) {
 		cfg.min_step_time_update_lcd = 10; // min 10*0.05 = 0.5 sec
 	min_step_time_update_lcd = cfg.min_step_time_update_lcd * (100 * CLOCK_16M_SYS_TIMER_CLK_1MS);
 
-	cfg.hw_cfg.clock = USE_CLOCK;
+	cfg.hw_cfg.clock = 0;
 	cfg.hw_cfg.memo = USE_FLASH_MEMO;
 	cfg.hw_cfg.trg = USE_TRIGGER_OUT;
 	my_RxTx_Data[0] = CMD_ID_CFG;
@@ -271,7 +271,7 @@ void user_init_normal(void) {//this will get executed one time after power up
 			memcpy(&cfg, &def_cfg, sizeof(cfg));
 		if(flash_read_cfg(&cmf, EEP_ID_CMF, sizeof(cmf)) != sizeof(cmf))
 			memcpy(&cmf, &def_cmf, sizeof(cmf));
-#if USE_CLOCK && USE_TIME_ADJUST
+#if USE_TIME_ADJUST
 		if(flash_read_cfg(&utc_time_tick_step, EEP_ID_TIM, sizeof(utc_time_tick_step)) != sizeof(utc_time_tick_step))
 			utc_time_tick_step = CLOCK_16M_SYS_TIMER_CLK_1S;
 #endif
@@ -331,7 +331,7 @@ _attribute_ram_code_ void user_init_deepRetn(void) {//after sleep this will get 
 //----------------------- main_loop()
 _attribute_ram_code_ void main_loop(void) {
 	blt_sdk_main_loop();
-#if	USE_CLOCK || USE_FLASH_MEMO
+#if	USE_FLASH_MEMO
 	while(clock_time() -  utc_time_sec_tick > utc_time_tick_step) {
 		utc_time_sec_tick += utc_time_tick_step;
 		utc_time_sec++; // + 1 sec

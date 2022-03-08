@@ -459,25 +459,4 @@ _attribute_ram_code_ void show_small_number_x10(int16_t number, bool percent)
     set_lcd_bit(SYM_PERCENTAGE, percent);
 }
 
-
-#if USE_CLOCK
-_attribute_ram_code_ void show_clock(void)
-{
-    uint32_t tmp = utc_time_sec / 60;
-    uint32_t min = tmp % 60;
-    uint32_t hrs = tmp / 60 % 24;
-    draw_cell(CELL_A, CHR_0 + hrs / 10);
-    draw_cell(CELL_B, CHR_0 + hrs % 10);
-    draw_cell(CELL_C, CHR_SPACE);
-    draw_cell(CELL_X, CHR_0 + min / 10);
-    draw_cell(CELL_Y, CHR_0 + min % 10);
-    draw_cell(CELL_Z, CHR_SPACE);
-    set_lcd_bit(SYM_BIG_ONE_HUNDRED, false);
-    set_lcd_bit(SYM_PERCENTAGE, false);
-    set_lcd_bit(SYM_BIG_DECIMAL_DOT, false);
-    set_lcd_bit(SYM_SMALL_DECIMAL_DOT, false);
-    show_temp_symbol(0);
-}
-#endif // USE_CLOCK
-
 #endif // DEVICE_TYPE == DEVICE_CGDK2
