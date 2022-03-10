@@ -27,26 +27,3 @@
 #define LUT_CMD_0x26 0x26
 #define PLL_CONTROL 0x30
 
-//----------------------------------
-// define groups of segments into logical shapes
-//----------------------------------
-#define TOP_LEFT_1 1
-#define TOP_LEFT 2
-#define TOP_MIDDLE 3
-#define TOP_RIGHT 4
-#define BOTTOM_LEFT 5
-#define BOTTOM_RIGHT 6
-#define BACKGROUND 7
-#define BATTERY_LOW 8
-#define DASHES 9
-#define FACE 10
-#define FACE_SMILE 11
-#define FACE_FROWN 12
-#define FACE_NEUTRAL 13
-#define SUN 14
-#define FIXED 15
-#define FIXED_DEG_C 16
-#define FIXED_DEG_F 17
-#define MINUS 18
-#define ATC 19
-

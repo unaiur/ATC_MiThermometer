@@ -4,7 +4,7 @@
 #include "vendor/common/blt_common.h"
 #include "ble.h"
 
-#include "lcd.h"
+#include "display_drv.h"
 #include "app.h"
 #include "flash_eep.h"
 #if	USE_TRIGGER_OUT

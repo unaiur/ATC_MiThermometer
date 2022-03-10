@@ -5,8 +5,11 @@ OBJS += \
 $(OUT_PATH)/src/utils.o \
 $(OUT_PATH)/src/app.o \
 $(OUT_PATH)/src/display.o \
-$(OUT_PATH)/src/lcd_cgdk2.o \
-$(OUT_PATH)/src/epd_cgg1.o \
+$(OUT_PATH)/src/display_13seg_cell.o \
+$(OUT_PATH)/src/display_3cell_line.o \
+$(OUT_PATH)/src/display_drv_common.o \
+$(OUT_PATH)/src/display_drv_cgdk2.o \
+$(OUT_PATH)/src/display_drv_cgg1.o \
 $(OUT_PATH)/src/sensors.o \
 $(OUT_PATH)/src/trigger.o \
 $(OUT_PATH)/src/app_att.o \

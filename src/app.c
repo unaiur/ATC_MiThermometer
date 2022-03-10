@@ -7,7 +7,8 @@
 #include "flash_eep.h"
 #include "battery.h"
 #include "ble.h"
-#include "lcd.h"
+#include "display.h"
+#include "display_drv.h"
 #include "sensor.h"
 #include "app.h"
 #include "i2c.h"
@@ -56,8 +57,6 @@ const scomfort_t def_cmf = {
 		.t = {2100,2600}, // x0.01 C
 		.h = {3000,6000}  // x0.01 %
 };
-
-void lcd(void);
 
 // Settings
 const cfg_t def_cfg = {
@@ -238,14 +237,7 @@ _attribute_ram_code_ void suspend_enter_cb(u8 e, u8 *p, int n) {
 void low_vbat(void) {
 	if(cfg.hw_cfg.shtc3 && wrk_measure)
 		soft_reset_sensor();
-	show_temp_symbol(0);
-	show_big_number_x10(measured_data.battery_mv * 10);
-	show_small_number_x10(-1023, 1); // "Lo"
-	show_battery_symbol(1);
-	update_lcd();
-#if DISPLAY_TYPE == EPD
-	while(task_lcd()) pm_wait_ms(10);
-#endif
+	display_low_battery_voltage(measured_data.battery_mv);
 	cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER,
 			clock_time() + 120 * CLOCK_16M_SYS_TIMER_CLK_1S); // go deep-sleep 2 minutes
 }
@@ -302,7 +294,7 @@ void user_init_normal(void) {//this will get executed one time after power up
 #if USE_FLASH_MEMO
 	memo_init();
 #endif
-	init_lcd();
+	display_init();
 	set_hw_version();
 	wrk_measure = 1;
 #if defined(GPIO_ADC1) || defined(GPIO_ADC2)
@@ -312,10 +304,8 @@ void user_init_normal(void) {//this will get executed one time after power up
 #endif
 	check_battery();
 	WakeupLowPowerCb(0);
-	lcd();
-#if DISPLAY_TYPE == LCD
-	update_lcd();
-#endif
+	display_update();
+	display_refresh();
 	start_measure = 1;
 }
 
@@ -413,18 +403,12 @@ _attribute_ram_code_ void main_loop(void) {
 					tim_measure = new;
 					start_measure = 1;
 				}
-#if DISPLAY_TYPE == EPD // Can be bypassed by measurements when there is no E-Ink update (https://github.com/pvvx/ATC_MiThermometer/issues/180)
-				else
-#endif
-				if (new - tim_last_chow >= min_step_time_update_lcd) {
+				else if (new - tim_last_chow >= min_step_time_update_lcd) {
 					if (!lcd_flg.b.ext_data) {
 						lcd_flg.b.new_update = lcd_flg.b.notify_on;
-						lcd();
+						display_update();
 					}
-#if DISPLAY_TYPE == EPD
-					if(!stage_lcd)
-#endif
-						update_lcd();
+					display_refresh();
 					tim_last_chow = new;
 				}
 				bls_pm_setAppWakeupLowPower(0, 0);
@@ -437,7 +421,7 @@ _attribute_ram_code_ void main_loop(void) {
 		}
 #if DISPLAY_TYPE == EPD
 		if(wrk_measure == 0 && stage_lcd) {
-			if(gpio_read(EPD_BUSY) && (!task_lcd())) {
+			if (gpio_read(EPD_BUSY) && (!task_lcd())) {
 				cpu_set_gpio_wakeup(EPD_BUSY, Level_High, 0);  // pad high wakeup deepsleep disable
 			} else if((bls_pm_getSystemWakeupTick() - clock_time()) > 25 * CLOCK_16M_SYS_TIMER_CLK_1MS) {
 				cpu_set_gpio_wakeup(EPD_BUSY, Level_High, 1);  // pad high wakeup deepsleep enable

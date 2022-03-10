@@ -6,7 +6,7 @@
 #include "ble.h"
 #include "vendor/common/blt_common.h"
 #include "cmd_parser.h"
-#include "lcd.h"
+#include "display_drv.h"
 #include "app.h"
 #include "flash_eep.h"
 #if	USE_TRIGGER_OUT
