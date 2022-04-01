@@ -3,6 +3,7 @@ OUT_DIR += /src
 
 OBJS += \
 $(OUT_PATH)/src/utils.o \
+$(OUT_PATH)/src/uclock.o \
 $(OUT_PATH)/src/app.o \
 $(OUT_PATH)/src/display.o \
 $(OUT_PATH)/src/display_13seg_cell.o \

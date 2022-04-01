@@ -138,10 +138,6 @@ extern int16_t last_temp; // x0.1 C
 extern uint16_t last_humi; // x1 %
 
 extern volatile uint8_t tx_measures;
-extern volatile uint8_t start_measure; // start measure all
-extern volatile uint8_t wrk_measure;
-extern volatile uint8_t end_measure;
-extern uint32_t tim_measure;
 
 typedef union _lcd_flg_t {
 	struct  {
