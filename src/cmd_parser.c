@@ -228,7 +228,6 @@ __attribute__((optimize("-Os"))) void cmd_parser(void * p) {
 			if(len >= 2)
 				tx_measures = req->dat[1];
 			else {
-				end_measure = 1;
 				tx_measures = 1;
 			}
 			olen = 2;
