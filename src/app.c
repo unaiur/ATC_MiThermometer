@@ -10,6 +10,7 @@
 #include "display.h"
 #include "display_drv.h"
 #include "sensor.h"
+#include "button.h"
 #include "app.h"
 #include "i2c.h"
 #include "uclock.h"
@@ -74,7 +75,7 @@ const cfg_t def_cfg = {
 #if DEVICE_TYPE == DEVICE_CGG1
 		.hw_cfg.hwver = 2,
 #elif DEVICE_TYPE == DEVICE_CGDK2
-		.hw_cfg.hwver = 7,
+		.hw_cfg.hwver = 6,
 #endif
 #if USE_FLASH_MEMO
 		.hw_cfg.clock = 1,
@@ -151,6 +152,7 @@ __attribute__((optimize("-Os"))) void test_config(void) {
 		cfg.min_step_time_update_lcd = 10; // min 10*0.05 = 0.5 sec
 	min_step_time_update_lcd = cfg.min_step_time_update_lcd * (100 * CLOCK_16M_SYS_TIMER_CLK_1MS);
 
+	cfg.hw_cfg.hwver = def_cfg.hw_cfg.hwver;
 	cfg.hw_cfg.clock = 0;
 	cfg.hw_cfg.memo = USE_FLASH_MEMO;
 	cfg.hw_cfg.trg = USE_TRIGGER_OUT;
@@ -195,6 +197,7 @@ void user_init_normal(void) {//this will get executed one time after power up
 	}
 	test_config();
 	memcpy(&ext, &def_ext, sizeof(ext));
+	button_init();
 	init_ble();
 	sensor_init();
 #if USE_FLASH_MEMO
@@ -230,6 +233,7 @@ _attribute_ram_code_ void main_loop(void) {
 		return;
 	}
 
+	button_handle();
 	if (sensor_read()) {
 		last_temp = (measured_data.temp + 5)/ 10;
 		last_humi = (measured_data.humi + 50)/ 100;
@@ -244,12 +248,7 @@ _attribute_ram_code_ void main_loop(void) {
 			mi_beacon_summ();
 #endif
 		set_adv_data();
-
-		if (!lcd_flg.b.ext_data) {
-			lcd_flg.b.new_update = lcd_flg.b.notify_on;
-			display_update();
-		}
-
+		display_update();
 		uclock_awake_after(0); // Ensure that we do not sleep after measuring new data
 	} else if (sensor_is_idle()) {
 		if ((blc_ll_getCurrentState() & BLS_LINK_STATE_CONN)) {

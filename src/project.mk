@@ -12,6 +12,7 @@ $(OUT_PATH)/src/display_drv_common.o \
 $(OUT_PATH)/src/display_drv_cgdk2.o \
 $(OUT_PATH)/src/display_drv_cgg1.o \
 $(OUT_PATH)/src/sensors.o \
+$(OUT_PATH)/src/button.o \
 $(OUT_PATH)/src/trigger.o \
 $(OUT_PATH)/src/app_att.o \
 $(OUT_PATH)/src/battery.o \

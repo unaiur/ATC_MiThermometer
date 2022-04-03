@@ -44,7 +44,11 @@ static inline void display_temperature_humidity_layout()
 
 _attribute_ram_code_ void display_update(void)
 {
-	display_ble_symbol(ble_connected);
+	if (lcd_flg.b.ext_data)
+		return;
+
+	lcd_flg.b.new_update = lcd_flg.b.notify_on;
+	display_ble_symbol(ble_connected & 0x10);
 	if (should_display_ext_data_layout()) {
 		display_ext_data_layout();
 	} else {
