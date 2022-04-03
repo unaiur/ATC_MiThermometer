@@ -159,22 +159,6 @@ __attribute__((optimize("-Os"))) void test_config(void) {
 	memcpy(&my_RxTx_Data[2], &cfg, sizeof(cfg));
 }
 
-void low_vbat(void) {
-	sensor_turn_off();
-	display_low_battery_voltage(measured_data.battery_mv);
-	cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER,
-			clock_time() + 120 * CLOCK_16M_SYS_TIMER_CLK_1S); // go deep-sleep 2 minutes
-}
-
-//--- check battery
-_attribute_ram_code_ void check_battery(void) {
-	measured_data.battery_mv = get_battery_mv();
-	if (measured_data.battery_mv < 2000) {
-		low_vbat();
-	}
-	battery_level = get_battery_level(measured_data.battery_mv);
-}
-
 //------------------ user_init_normal -------------------
 void user_init_normal(void) {//this will get executed one time after power up
 	if (get_battery_mv() < MIN_VBAT_MV) // 2.2V

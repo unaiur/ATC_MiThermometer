@@ -10,4 +10,4 @@ uint16_t get_adc_mv(uint32_t p_ain);
 #define get_battery_mv() get_adc_mv(SHL_ADC_VBAT)	// Channel B0P/B5P
 
 uint8_t get_battery_level(uint16_t battery_mv);
-
+void check_battery(void);

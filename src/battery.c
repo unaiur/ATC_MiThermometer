@@ -3,7 +3,10 @@
 #include "drivers.h"
 #include "stack/ble/ble.h"
 
+#include "app.h"
 #include "battery.h"
+#include "display.h"
+#include "sensor.h"
 
 uint8_t adc_hw_initialized = 0;
 #define ADC_BUF_COUNT	8
@@ -87,4 +90,22 @@ _attribute_ram_code_ uint8_t get_battery_level(uint16_t battery_mv) {
 			battery_level = 100;
 	}
 	return battery_level;
+}
+
+static void low_vbat(uint16_t battery_mv)
+{
+	sensor_turn_off();
+	display_low_battery_voltage(battery_mv);
+	cpu_sleep_wakeup(DEEPSLEEP_MODE, PM_WAKEUP_TIMER,
+			clock_time() + 120 * CLOCK_16M_SYS_TIMER_CLK_1S); // go deep-sleep 2 minutes
+}
+
+//--- check battery
+_attribute_ram_code_ void check_battery(void)
+{
+	measured_data.battery_mv = get_battery_mv();
+	if (measured_data.battery_mv < 2000) {
+		low_vbat(measured_data.battery_mv);
+	}
+	battery_level = get_battery_level(measured_data.battery_mv);
 }

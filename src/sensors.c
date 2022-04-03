@@ -11,6 +11,7 @@
 #include "i2c.h"
 #include "sensor.h"
 #include "app.h"
+#include "battery.h"
 
 #define SENSOR_MEASURING_TIMEOUT_ms  11 // SHTV3 11 ms, SHT4x max 8.2 ms
 
