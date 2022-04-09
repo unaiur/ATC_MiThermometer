@@ -134,7 +134,7 @@ void display_init(void)
 }
 
 // Sends the modified regions of the display buffer to the LCD controller
-_attribute_ram_code_ void display_refresh()
+_attribute_ram_code_ void display_async_refresh()
 {
     for (int i = 0; i < sizeof display_buff; ++i) {
         if (display_buff[i] != display_cmp_buff[i]) {
@@ -148,6 +148,11 @@ _attribute_ram_code_ void display_refresh()
             return;
         }
     }
+}
+
+void display_sync_refresh(void)
+{
+    display_async_refresh();
 }
 
 _attribute_ram_code_ void display_temp_symbol(uint8_t symbol)

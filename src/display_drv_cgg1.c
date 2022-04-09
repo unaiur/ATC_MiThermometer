@@ -73,7 +73,7 @@ void display_init(void) {
     // EPD_BUSY: Low 866 us
 }
 
-_attribute_ram_code_ void display_refresh(void){
+_attribute_ram_code_ void display_async_refresh(void){
     if(!stage_lcd && memcmp(&display_cmp_buff, &display_buff, sizeof(display_buff))) {
         memcpy(&display_cmp_buff, &display_buff, sizeof(display_buff));
         if(lcd_refresh_cnt) {
@@ -83,6 +83,23 @@ _attribute_ram_code_ void display_refresh(void){
         } else {
             display_init(); // pulse RST_N low for 110 microseconds
         }
+    }
+    if (stage_lcd != 0) {
+        if (task_lcd() == 0) {
+            cpu_set_gpio_wakeup(EPD_BUSY, Level_High, 0);  // pad high wakeup deepsleep disable
+        } else {
+            cpu_set_gpio_wakeup(EPD_BUSY, Level_High, 1);  // pad high wakeup deepsleep enable
+            bls_pm_setWakeupSource(PM_WAKEUP_PAD);  // gpio pad wakeup suspend/deepsleep
+        }
+    }
+}
+
+void display_sync_refresh(void)
+{
+    display_async_refresh();
+    while (stage_lcd) {
+        pm_wait_ms(10);
+        display_async_refresh();
     }
 }
 

@@ -62,9 +62,6 @@ void display_low_battery_voltage(int battery_mv)
 	display_big_number_x10(battery_mv * 10);
 	display_small_number_x10(-1023, 1); // Force "Lo" display
 	display_battery_symbol(1);
-	display_refresh();
-#if DISPLAY_TYPE == EPD
-	while(task_lcd()) pm_wait_ms(10);
-#endif
+	display_sync_refresh();
 }
 

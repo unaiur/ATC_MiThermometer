@@ -288,18 +288,7 @@ _attribute_ram_code_ void main_loop(void) {
 			}
 		}
 					
-		display_refresh();
-#if DISPLAY_TYPE == EPD
-		// TODO: this code should not be here
-		if (stage_lcd) {
-			if (gpio_read(EPD_BUSY) && (!task_lcd())) {
-				cpu_set_gpio_wakeup(EPD_BUSY, Level_High, 0);  // pad high wakeup deepsleep disable
-			} else if((bls_pm_getSystemWakeupTick() - clock_time()) > 25 * CLOCK_16M_SYS_TIMER_CLK_1MS) {
-				cpu_set_gpio_wakeup(EPD_BUSY, Level_High, 1);  // pad high wakeup deepsleep enable
-				bls_pm_setWakeupSource(PM_WAKEUP_PAD);  // gpio pad wakeup suspend/deepsleep
-			}
-		}
-#endif
+		display_async_refresh();
 	}
 	uclock_before_sleep();
 }

@@ -12,7 +12,8 @@ extern uint8_t display_buff[DISPLAY_BUFF_LEN];
 void display_render_bit(uint8_t bit, bool on);
 
 void display_init();
-void display_refresh();
+void display_async_refresh();
+void display_sync_refresh();
 
 /* 0x00 = "  "
  * 0x20 = "°Г"
@@ -28,8 +29,3 @@ void display_battery_symbol(bool state);
 void display_ble_symbol(bool state);
 void display_big_number_x10(int16_t number);
 void display_small_number_x10(int16_t number, bool percent);
-
-#if DISPLAY_TYPE == EPD
-extern uint8_t stage_lcd;
-int task_lcd(void);
-#endif
