@@ -73,6 +73,11 @@ void display_init(void) {
     // EPD_BUSY: Low 866 us
 }
 
+void display_power_toggle()
+{
+    // ePaper does not need to be turned off to save power
+}
+
 _attribute_ram_code_ void display_async_refresh(void){
     if(!stage_lcd && memcmp(&display_cmp_buff, &display_buff, sizeof(display_buff))) {
         memcpy(&display_cmp_buff, &display_buff, sizeof(display_buff));

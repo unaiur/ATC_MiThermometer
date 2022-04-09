@@ -327,6 +327,7 @@ extern u8 my_RxTx_Data[16];
 
 void my_att_init();
 void init_ble();
+void ble_conn_toggle();
 void ble_get_name(void);
 bool ble_get_connected();
 void ble_send_measures(void);

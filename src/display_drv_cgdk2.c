@@ -107,6 +107,8 @@ static _attribute_ram_code_ void send_last_lcd_cmd(uint8_t cmd, uint8_t *dataBuf
 
 // Initalizes the LCD controller
 static RAM uint8_t display_cmp_buff[12];
+static RAM bool is_off;
+
 void display_init(void)
 {
     memset(display_buff, 0, sizeof display_buff);
@@ -133,9 +135,18 @@ void display_init(void)
     send_last_lcd_cmd(LCD_CMD_ADDRESS_SET_OPERATION, display_buff, sizeof display_buff);
 }
 
+void display_power_toggle()
+{
+    i2c_start();
+    u8 cmd_arg = is_off ? LCD_CMD_MODE_SET_DISPLAY_ON : LCD_CMD_MODE_SET_DISPLAY_OFF;
+    send_last_lcd_cmd(LCD_CMD_MODE_SET_OPERATION | cmd_arg, 0, 0);
+    is_off = !is_off;
+}
+
 // Sends the modified regions of the display buffer to the LCD controller
 _attribute_ram_code_ void display_async_refresh()
 {
+    if (is_off) return;
     for (int i = 0; i < sizeof display_buff; ++i) {
         if (display_buff[i] != display_cmp_buff[i]) {
             int j = sizeof display_buff;

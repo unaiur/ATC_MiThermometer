@@ -37,8 +37,11 @@ void button_init()
 
 static _attribute_ram_code_ void button_handle_click(bool long_press, int repetitions)
 {
-    ble_connected ^= 0x10;
-    display_update();
+    if (long_press) {
+        ble_conn_toggle();
+    } else {
+        display_power_toggle();
+    }
 }
 
 _attribute_ram_code_ void button_handle()

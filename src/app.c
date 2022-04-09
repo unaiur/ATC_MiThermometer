@@ -128,26 +128,42 @@ __attribute__((optimize("-Os"))) void test_config(void) {
 	else if (cfg.advertising_interval > 160) // max 160 : 160*62.5 = 10000 ms
 		cfg.advertising_interval = 160; // 160*62.5 = 10000 ms
 	adv_interval = cfg.advertising_interval * 100; // Tadv_interval = adv_interval * 62.5 ms
-	/* interval = 16;
-	 * connection_interval_ms = (interval * 125) / 100;
-	 * connection_latency_ms = (cfg.connect_latency + 1) * connection_interval_ms = (16*125/100)*(99+1) = 2000;
-	 * connection_timeout_ms = connection_latency_ms * 4 = 2000 * 4 = 8000;
-	 */
-	connection_timeout = ((cfg.connect_latency + 1) * 4 * 16 * 125) / 1000; // = 800, default = 8 sec
-	if (connection_timeout > 32 * 100)
-		connection_timeout = 32 * 100; //x10 ms, max 32 sec?
-	else if(connection_timeout < 100)
-		connection_timeout = 100;	//x10 ms,  1 sec
-	if(!cfg.connect_latency) {
-		my_periConnParameters.intervalMin = (cfg.advertising_interval * 625 / 30) - 1; // Tmin = 20*1.25 = 25 ms, Tmax = 3333*1.25 = 4166.25 ms
-		my_periConnParameters.intervalMax = my_periConnParameters.intervalMin + 5;
-		my_periConnParameters.latency = 0;
-	} else {
-		my_periConnParameters.intervalMin = 16; // 10*1.25 = 12.5 ms
-		my_periConnParameters.intervalMax = 16; // 60*1.25 = 75 ms
+
+	// From IOS Accessory Design Guidelines requires that:
+	// * Connection Latency <= 30
+	// * Intervals are a positive multiple of 15.
+	// * Either:
+	//   - intervalMax >= intervalMin + 15
+	//   - both interval min and max are set to 15ms
+	// * IntervalMax * (Connection Latency + 1) <= 2 sec
+	// * Connection Timeout from 2 to 6 seconds.
+	// * Connection Timeout greater than IntervalMax * (Connection Latency + 1) * 3
+	if (cfg.connect_latency) {
+		my_periConnParameters.intervalMin = 12; // 12*1.25 = 15 ms
+		my_periConnParameters.intervalMax = 12; // 12*1.25 = 15 ms
 		my_periConnParameters.latency = cfg.connect_latency;
+		if (my_periConnParameters.latency > 30) {
+			my_periConnParameters.latency = 30;
+		}
+	} else {
+		u32 interval = cfg.advertising_interval * 50; // Interval unit: 1.25ms
+		interval -= interval % 12;  // Ensure it is a multiple of 15ms
+		if (interval > 1588) {      // Maximum: 1.985 seconds
+			interval = 1588;
+		}
+		my_periConnParameters.intervalMin = interval;
+		my_periConnParameters.intervalMax = interval + 12;
+		my_periConnParameters.latency = 0;
+	}
+	// The connection timeout is 4 times the connection latency, expressed in 10ms units
+	connection_timeout = my_periConnParameters.intervalMax / 2 * (my_periConnParameters.latency + 1);
+	if (connection_timeout < 200) {
+		connection_timeout = 200;
+	} else if (connection_timeout > 600) {
+		connection_timeout = 600;
 	}
 	my_periConnParameters.timeout = connection_timeout;
+
 	if(cfg.min_step_time_update_lcd < 10)
 		cfg.min_step_time_update_lcd = 10; // min 10*0.05 = 0.5 sec
 	min_step_time_update_lcd = cfg.min_step_time_update_lcd * (100 * CLOCK_16M_SYS_TIMER_CLK_1MS);

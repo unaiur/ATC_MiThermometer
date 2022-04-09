@@ -8,6 +8,7 @@
 #include "cmd_parser.h"
 #include "display_drv.h"
 #include "app.h"
+#include "display.h"
 #include "flash_eep.h"
 #if	USE_TRIGGER_OUT
 #include "trigger.h"
@@ -81,6 +82,8 @@ void ble_scan_response_callback(uint8_t e, uint8_t *p, int n) {
 void ble_disconnect_callback(uint8_t e, uint8_t *p, int n) {
 	if(ble_connected & 0x80) // reset device on disconnect?
 		start_reboot();
+	else if (ble_connected & 0x10) // is in connected state?
+		ev_adv_timeout(0,0,0);
 
 	bls_pm_setManualLatency(0); // ?
 
@@ -100,13 +103,7 @@ void ble_disconnect_callback(uint8_t e, uint8_t *p, int n) {
 
 void ble_connect_callback(uint8_t e, uint8_t *p, int n) {
 	// bls_l2cap_setMinimalUpdateReqSendingTime_after_connCreate(1000);
-	ble_connected = 1;
-	if(cfg.connect_latency) {
-		my_periConnParameters.intervalMin = 16;
-		my_periConnParameters.intervalMax = 16;
-	}
-	my_periConnParameters.latency = cfg.connect_latency;
-	my_periConnParameters.timeout = connection_timeout;
+	ble_connected |= 1;
 	bls_l2cap_requestConnParamUpdate(my_periConnParameters.intervalMin, my_periConnParameters.intervalMax, my_periConnParameters.latency, my_periConnParameters.timeout);
 }
 
@@ -141,15 +138,17 @@ _attribute_ram_code_ void user_set_rf_power(u8 e, u8 *p, int n) {
 	(void) e; (void) p; (void) n;
 	rf_set_power_level_index(cfg.rf_tx_power);
 }
-/*
- * bls_app_registerEventCallback (BLT_EV_FLAG_ADV_DURATION_TIMEOUT, &ev_adv_timeout);
- * blt_event_callback_t(): */
-_attribute_ram_code_ void ev_adv_timeout(u8 e, u8 *p, int n) {
+
+_attribute_ram_code_ void ev_adv_timeout(u8 e, u8 *p, int n)
+{
 	(void) e; (void) p; (void) n;
 	bls_ll_setAdvParam(adv_interval, adv_interval + 10,
-			ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, 0, NULL,
+			ADV_TYPE_NONCONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, 0, NULL,
 			BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
 	bls_ll_setAdvEnable(1);
+	bls_ll_setAdvDuration(0, 0);
+	ble_connected &= ~0x10;
+	display_update();
 }
 
 #if BLE_SECURITY_ENABLE
@@ -504,6 +503,22 @@ void ble_send_cmf(void) {
 	bls_att_pushNotifyData(RxTx_CMD_OUT_DP_H, send_buf, sizeof(cmf) + 1);
 }
 
+void ble_conn_toggle(void)
+{
+	if ((ble_connected & 0x10) == 0) {
+		bls_ll_setAdvParam(96, 104, // 60ms - 65ms
+				ADV_TYPE_CONNECTABLE_UNDIRECTED, OWN_ADDRESS_PUBLIC, 0, NULL,
+				BLT_ENABLE_ADV_ALL, ADV_FP_NONE);
+		bls_ll_setAdvEnable(1);
+		bls_ll_setAdvDuration(150000000, 1); // interval usec (150s), duration enable
+		bls_app_registerEventCallback(BLT_EV_FLAG_ADV_DURATION_TIMEOUT, &ev_adv_timeout);
+		ble_connected |= 0x10;
+		display_update();
+	} else {
+		ev_adv_timeout(0, 0, 0);
+	}
+}
+
 #if USE_TRIGGER_OUT
 void ble_send_trg(void) {
 	send_buf[0] = CMD_ID_TRG;
@@ -533,5 +548,3 @@ __attribute__((optimize("-Os"))) void send_memo_blk(void) {
 	}
 }
 #endif
-
-
