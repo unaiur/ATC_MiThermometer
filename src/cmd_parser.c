@@ -245,9 +245,11 @@ __attribute__((optimize("-Os"))) void cmd_parser(void * p) {
 				memcpy(&cfg, &req->dat[1], len);
 			}
 			test_config();
-			ev_adv_timeout(0, 0, 0);
-			if(cmd != CMD_ID_CFG_NS) // Get/set config (not save to Flash)
-				flash_write_cfg(&cfg, EEP_ID_CFG, sizeof(cfg));
+			if (len) {
+				ev_adv_timeout(0, 0, 0);
+				if (cmd != CMD_ID_CFG_NS) // Get/set config (not save to Flash)
+					flash_write_cfg(&cfg, EEP_ID_CFG, sizeof(cfg));
+			}
 			ble_send_cfg();
 		} else if (cmd == CMD_ID_CFG_DEF) { // Set default config
 			memcpy(&cfg, &def_cfg, sizeof(cfg));

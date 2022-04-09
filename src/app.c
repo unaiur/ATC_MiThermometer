@@ -172,6 +172,9 @@ __attribute__((optimize("-Os"))) void test_config(void) {
 	cfg.hw_cfg.clock = 0;
 	cfg.hw_cfg.memo = USE_FLASH_MEMO;
 	cfg.hw_cfg.trg = USE_TRIGGER_OUT;
+	cfg.hw_cfg.mi_beacon = USE_MIHOME_BEACON;
+	cfg.hw_cfg.shtc3 = sensor_is_shtc3();
+
 	my_RxTx_Data[0] = CMD_ID_CFG;
 	my_RxTx_Data[1] = VERSION;
 	memcpy(&my_RxTx_Data[2], &cfg, sizeof(cfg));
