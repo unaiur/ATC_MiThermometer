@@ -17,18 +17,15 @@ _attribute_ram_code_ void init_i2c(){
     reg_spi_sp  &= ~FLD_SPI_ENABLE;   //force PADs act as I2C; i2c and spi share the hardware of IC
 }
 
-/*
-void send_i2c(uint8_t device_id, uint8_t *buffer, int dataLen){
-	if((reg_clk_en0 & FLD_CLK0_I2C_EN)==0)
-		init_i2c();
-	i2c_set_id(device_id);
-	i2c_write_series(0, 0, (uint8_t*)buffer,dataLen);
+_attribute_ram_code_ void i2c_reinit_after_deep_sleep()
+{
+    if ((reg_clk_en0 & FLD_CLK0_I2C_EN) == 0) {
+        init_i2c();
+    }
 }
-*/
 
 int scan_i2c_addr(int address) {
-	if((reg_clk_en0 & FLD_CLK0_I2C_EN)==0)
-		init_i2c();
+    i2c_reinit_after_deep_sleep();
 	reg_i2c_id = (uint8_t) address;
 	reg_i2c_ctrl = FLD_I2C_CMD_START | FLD_I2C_CMD_ID | FLD_I2C_CMD_STOP;
 	while(reg_i2c_status & FLD_I2C_CMD_BUSY);

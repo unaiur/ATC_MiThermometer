@@ -37,8 +37,7 @@ RAM volatile uint32_t timer_measure_cb;
 RAM uint8_t sensor_i2c_addr;
 
 static _attribute_ram_code_ void send_sensor_word(uint16_t cmd) {
-	if((reg_clk_en0 & FLD_CLK0_I2C_EN)==0)
-			init_i2c();
+    i2c_reinit_after_deep_sleep();
 	reg_i2c_id = sensor_i2c_addr;
 	reg_i2c_adr_dat = cmd;
 	reg_i2c_ctrl = FLD_I2C_CMD_START | FLD_I2C_CMD_ID | FLD_I2C_CMD_ADDR | FLD_I2C_CMD_DO | FLD_I2C_CMD_STOP;
@@ -46,8 +45,7 @@ static _attribute_ram_code_ void send_sensor_word(uint16_t cmd) {
 }
 
 static _attribute_ram_code_ void send_sensor_byte(uint8_t cmd) {
-	if((reg_clk_en0 & FLD_CLK0_I2C_EN)==0)
-			init_i2c();
+    i2c_reinit_after_deep_sleep();
 	reg_i2c_id = sensor_i2c_addr;
 	reg_i2c_adr = cmd;
 	reg_i2c_ctrl = FLD_I2C_CMD_START | FLD_I2C_CMD_ID | FLD_I2C_CMD_ADDR | FLD_I2C_CMD_STOP;
@@ -86,8 +84,7 @@ _attribute_ram_code_ __attribute__((optimize("-Os"))) int read_sensor_cb(void) {
 	uint16_t _humi;
 	uint8_t data, crc; // calculated checksum
 	int i;
-	if((reg_clk_en0 & FLD_CLK0_I2C_EN)==0)
-		init_i2c();
+    i2c_reinit_after_deep_sleep();
 	if(sensor_i2c_addr == 0) {
 		init_sensor();
 		return 0;

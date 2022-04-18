@@ -79,7 +79,7 @@ const cfg_t def_cfg = {
 #if DEVICE_TYPE == DEVICE_CGG1
 		.hw_cfg.hwver = 2,
 #elif DEVICE_TYPE == DEVICE_CGDK2
-		.hw_cfg.hwver = 7,
+		.hw_cfg.hwver = 6,
 #endif
 #if USE_FLASH_MEMO
 		.hw_cfg.clock = 1,

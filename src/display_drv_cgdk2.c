@@ -10,11 +10,12 @@
 #include "display_drv.h"
 #include "display_13seg_cell.h"
 #include "display_3cell_line.h"
+#include "i2c_send.c"
 
 
 #define LCD_I2C_ADDR 0x7C   // I2C slave address of the LCD controller (including R/~W bit)
 
-#define LCD_CMD_MORE 0x80
+#define LCD_MORE_CMDS 0x80  // Set this bit if there are more commands after this one
 
 #define LCD_CMD_ADDRESS_SET_OPERATION       0 /* Address in nibbles (half byte). 5 LSB bits. MSB bit is handled using SET_IC command */
 
@@ -62,75 +63,34 @@
 #define SYM_SMALL_DECIMAL_DOT NBIT(9, 0) // Decimal dot for bottom row
 #define SYM_PERCENTAGE        NBIT(9, 1) // Percentage sign in bottom row
 
-// Starts a I2C transaction, sending the start symbol and the slave address
-static _attribute_ram_code_ void i2c_start()
-{
-    if ((reg_clk_en0 & FLD_CLK0_I2C_EN) == 0) {
-        init_i2c();
-    }
-    reg_i2c_id = LCD_I2C_ADDR;
-    reg_i2c_ctrl = FLD_I2C_CMD_START | FLD_I2C_CMD_ID;
-    while (reg_i2c_status & FLD_I2C_CMD_BUSY);
-}
-
-// Sends one but in the currently open I2C transaction
-static _attribute_ram_code_ void i2c_send(uint8_t byte)
-{
-    reg_i2c_do = byte;
-    reg_i2c_ctrl = FLD_I2C_CMD_DO;
-    while (reg_i2c_status & FLD_I2C_CMD_BUSY);
-}
-
-// Finishes current I2C transaction
-static _attribute_ram_code_ void i2c_stop()
-{
-    reg_i2c_ctrl = FLD_I2C_CMD_STOP;
-    while (reg_i2c_status & FLD_I2C_CMD_BUSY);
-}
-
-// Sends a LCD command in currently open I2C transaction
-static inline void send_lcd_cmd(uint8_t cmd)
-{
-    i2c_send(LCD_CMD_MORE | cmd);
-}
-
-// Sends the last LCD command in currently open I2C transaction,
-// some extra optional data and closes the I2C transaction.
-static _attribute_ram_code_ void send_last_lcd_cmd(uint8_t cmd, uint8_t *dataBuf, uint32_t dataLen)
-{
-    i2c_send(cmd);
-    while (dataLen--) {
-        i2c_send(*dataBuf++);
-    }
-    i2c_stop();
-}
-
 // Initalizes the LCD controller
 static RAM uint8_t display_cmp_buff[12];
+
+const static uint8_t init_seq[] = {
+    LCD_MORE_CMDS | LCD_CMD_SET_IC_OPERATION
+        | LCD_CMD_SET_IC_RESET,
+    LCD_MORE_CMDS | LCD_CMD_DISPLAY_CONTROL_OPERATION
+        | LCD_CMD_DISPLAY_CONTROL_FRAME_INV
+        | LCD_CMD_DISPLAY_CONTROL_64HZ
+        | LCD_CMD_DISPLAY_CONTROL_POWER(1),
+    LCD_CMD_MODE_SET_OPERATION
+        | LCD_CMD_MODE_SET_DISPLAY_ON
+};
+
 void display_init(void)
 {
-    memset(display_buff, 0, sizeof display_buff);
-    memset(display_cmp_buff, 0, sizeof display_cmp_buff);
+    i2c_reinit_after_deep_sleep();
 
     // Ensure than 100us has been elapsed since the IC was powered on
     pm_wait_us(100);
 
     // Ensure that there is no open I2C transaction
-    i2c_start();
-    i2c_stop();
+    i2c_send_abort();
 
-     // Send reset command
-    i2c_start();
-    send_last_lcd_cmd(LCD_CMD_SET_IC_OPERATION | LCD_CMD_SET_IC_RESET, 0, 0);
-
-    // Configure and clean the display
-    i2c_start();
-    send_lcd_cmd(LCD_CMD_DISPLAY_CONTROL_OPERATION
-            | LCD_CMD_DISPLAY_CONTROL_FRAME_INV
-            | LCD_CMD_DISPLAY_CONTROL_64HZ
-            | LCD_CMD_DISPLAY_CONTROL_POWER(1));
-    send_lcd_cmd(LCD_CMD_MODE_SET_OPERATION | LCD_CMD_MODE_SET_DISPLAY_ON);
-    send_last_lcd_cmd(LCD_CMD_ADDRESS_SET_OPERATION, display_buff, sizeof display_buff);
+    // Send init sequence and clear the screen
+    reg_i2c_id = LCD_I2C_ADDR;
+    i2c_send_buff(init_seq, sizeof init_seq, false);
+    i2c_send_buff(display_buff, sizeof display_buff, true);
 }
 
 // Sends the modified regions of the display buffer to the LCD controller
@@ -142,8 +102,10 @@ _attribute_ram_code_ void display_refresh()
             while (j > i && display_buff[j-1] == display_cmp_buff[j-1]) {
                 --j;
             }
-            i2c_start();
-            send_last_lcd_cmd(LCD_CMD_ADDRESS_SET_OPERATION + i * 2, display_buff + i, j - i);
+            i2c_reinit_after_deep_sleep();
+            reg_i2c_id = LCD_I2C_ADDR;
+            i2c_send_byte(LCD_CMD_ADDRESS_SET_OPERATION + i * 2, false);
+            i2c_send_buff(display_buff + i, j - i, true);
             memcpy(display_cmp_buff + i, display_buff + i, j - i);
             return;
         }
