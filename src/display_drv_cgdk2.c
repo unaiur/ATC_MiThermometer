@@ -62,46 +62,18 @@
 #define SYM_SMALL_DECIMAL_DOT NBIT(9, 0) // Decimal dot for bottom row
 #define SYM_PERCENTAGE        NBIT(9, 1) // Percentage sign in bottom row
 
-// Starts a I2C transaction, sending the start symbol and the slave address
-static _attribute_ram_code_ void i2c_start()
-{
-    if ((reg_clk_en0 & FLD_CLK0_I2C_EN) == 0) {
-        init_i2c();
-    }
-    reg_i2c_id = LCD_I2C_ADDR;
-    reg_i2c_ctrl = FLD_I2C_CMD_START | FLD_I2C_CMD_ID;
-    while (reg_i2c_status & FLD_I2C_CMD_BUSY);
-}
-
-// Sends one but in the currently open I2C transaction
-static _attribute_ram_code_ void i2c_send(uint8_t byte)
-{
-    reg_i2c_do = byte;
-    reg_i2c_ctrl = FLD_I2C_CMD_DO;
-    while (reg_i2c_status & FLD_I2C_CMD_BUSY);
-}
-
-// Finishes current I2C transaction
-static _attribute_ram_code_ void i2c_stop()
-{
-    reg_i2c_ctrl = FLD_I2C_CMD_STOP;
-    while (reg_i2c_status & FLD_I2C_CMD_BUSY);
-}
-
-// Sends a LCD command in currently open I2C transaction
+// Sends an intermediate LCD command in currently open I2C transaction
 static inline void send_lcd_cmd(uint8_t cmd)
 {
-    i2c_send(LCD_CMD_MORE | cmd);
+    i2c_send_byte(LCD_CMD_MORE | cmd);
 }
 
 // Sends the last LCD command in currently open I2C transaction,
 // some extra optional data and closes the I2C transaction.
 static _attribute_ram_code_ void send_last_lcd_cmd(uint8_t cmd, uint8_t *dataBuf, uint32_t dataLen)
 {
-    i2c_send(cmd);
-    while (dataLen--) {
-        i2c_send(*dataBuf++);
-    }
+    i2c_send_byte(cmd);
+    i2c_send_buff(dataBuf, dataLen);
     i2c_stop();
 }
 
@@ -118,15 +90,14 @@ void display_init(void)
     pm_wait_us(100);
 
     // Ensure that there is no open I2C transaction
-    i2c_start();
-    i2c_stop();
+    i2c_start(LCD_I2C_ADDR);
+    i2c_abort();
 
      // Send reset command
-    i2c_start();
-    send_last_lcd_cmd(LCD_CMD_SET_IC_OPERATION | LCD_CMD_SET_IC_RESET, 0, 0);
+    i2c_write_tx_1byte(LCD_I2C_ADDR, LCD_CMD_SET_IC_OPERATION | LCD_CMD_SET_IC_RESET);
 
     // Configure and clean the display
-    i2c_start();
+    i2c_start(LCD_I2C_ADDR);
     send_lcd_cmd(LCD_CMD_DISPLAY_CONTROL_OPERATION
             | LCD_CMD_DISPLAY_CONTROL_FRAME_INV
             | LCD_CMD_DISPLAY_CONTROL_64HZ
@@ -137,7 +108,7 @@ void display_init(void)
 
 void display_power_toggle()
 {
-    i2c_start();
+    i2c_start(LCD_I2C_ADDR);
     u8 cmd_arg = is_off ? LCD_CMD_MODE_SET_DISPLAY_ON : LCD_CMD_MODE_SET_DISPLAY_OFF;
     send_last_lcd_cmd(LCD_CMD_MODE_SET_OPERATION | cmd_arg, 0, 0);
     is_off = !is_off;
@@ -153,7 +124,7 @@ _attribute_ram_code_ void display_async_refresh()
             while (j > i && display_buff[j-1] == display_cmp_buff[j-1]) {
                 --j;
             }
-            i2c_start();
+            i2c_start(LCD_I2C_ADDR);
             send_last_lcd_cmd(LCD_CMD_ADDRESS_SET_OPERATION + i * 2, display_buff + i, j - i);
             memcpy(display_cmp_buff + i, display_buff + i, j - i);
             return;
