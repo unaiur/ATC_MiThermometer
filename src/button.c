@@ -30,9 +30,13 @@ static inline bool is_button_pressed()
 
 void button_init()
 {
-    button_state = IDLE;
     button_pressed_on_boot = is_button_pressed();
-    cpu_set_gpio_wakeup(GPIO_KEY, Level_Low, 1);
+    button_state = button_pressed_on_boot ? PRESSED : IDLE;
+}
+
+_attribute_ram_code_ bool button_was_pressed_on_boot()
+{
+    return button_pressed_on_boot;
 }
 
 static _attribute_ram_code_ void button_handle_click(bool long_press, int repetitions)

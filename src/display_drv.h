@@ -7,6 +7,7 @@
 #define NBIT(BYTE, BIT) ((BYTE)*8+(BIT))
 #define TMP_SYM_C	0xA0	// "°C"
 #define TMP_SYM_F	0x60	// "°F"
+#define TMP_SYM_EQ	0xC0	// "="
 
 extern uint8_t display_buff[DISPLAY_BUFF_LEN];
 void display_render_bit(uint8_t bit, bool on);

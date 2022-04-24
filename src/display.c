@@ -6,6 +6,7 @@
 #include "display.h"
 #include "display_drv.h"
 #include "app.h"
+#include "button.h"
 
 RAM uint32_t chow_tick_clk; // count show validity time, in clock
 RAM uint32_t chow_tick_sec; // count show validity time, in sec
@@ -31,11 +32,12 @@ static inline void display_ext_data_layout(void)
 static inline void display_temperature_humidity_layout()
 {
 	// Show temperature in Fahrenheit or Celsius degrees in the big number
+	bool btn_on_boot = button_was_pressed_on_boot();
 	if (cfg.flg.temp_F_or_C) {
-		display_temp_symbol(TMP_SYM_F);
+		display_temp_symbol(btn_on_boot ? TMP_SYM_EQ : TMP_SYM_F);
 		display_big_number_x10((((measured_data.temp / 5) * 9) + 3200) / 10); // convert C to F
 	} else {
-		display_temp_symbol(TMP_SYM_C);
+		display_temp_symbol(btn_on_boot ? TMP_SYM_EQ : TMP_SYM_C);
 		display_big_number_x10(last_temp);
 	}
 	display_battery_symbol(true);
